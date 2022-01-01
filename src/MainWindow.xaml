@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AltTabPlus"
         mc:Ignorable="d"
-        Title="Demo" Height="700" Width="400">
+        Title="Alt+Tab+Plus" Height="700" Width="400">
     <Window.Resources>
         <Style TargetType="ListBox">
             <Setter Property="BorderThickness" Value="0"/>
@@ -19,7 +19,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <!-- Menu -->
         <Border Grid.Row="0" Height="40" Background="#333333">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -28,22 +30,24 @@
                 </Grid.ColumnDefinitions>
 
                 <WrapPanel 
-                    Grid.Column="1" 
                     VerticalAlignment="Center" 
-                    HorizontalAlignment="Right"
-                    Margin="0 0 10 0">
+                    HorizontalAlignment="Left"
+                    Margin="10 0 10 0">
                     <Button
                         Margin="0 0 10 0"
-                        Width="30" 
+                        Content="添加"
+                        Width="80" 
                         Height="30"/>
 
                     <Button
-                        Width="30" 
+                        Content="关于"
+                        Width="80" 
                         Height="30"/>
                 </WrapPanel>
             </Grid>
         </Border>
 
+        <!-- App List -->
         <ListBox 
             Grid.Row="1"
             BorderThickness="0"
@@ -67,5 +71,10 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
+
+        <!-- Status -->
+        <Border Grid.Row="2">
+            
+        </Border>
     </Grid>
 </Window>
