@@ -34,7 +34,7 @@ namespace AltTabPlus
                 Shell32.SHGFI.SHGFI_LARGEICON | Shell32.SHGFI.SHGFI_ICON);
 
             shinfo.hIcon.ToIcon().ToBitmap().Save(saveFilePath);
-            Vanara.PInvoke.User32.DestroyIcon(shinfo.hIcon);
+            User32.DestroyIcon(shinfo.hIcon);
         }
 
         /// <summary>

@@ -4,24 +4,11 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
+using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Newtonsoft.Json;
-using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
-using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Path = System.IO.Path;
 
@@ -29,8 +16,13 @@ namespace AltTabPlus
 {
     public partial class MainWindow : Window
     {
-        private User32.HHOOK? _globalKeyboardHook;
-        private User32.HookProc _keyboardHookProc;
+        private HHOOK? _globalKeyboardHook;
+        private HookProc _keyboardHookProc;
+
+        private bool _isRecordingShortcut;
+        private ToggleButton _currentRecordButton;
+
+        private Dictionary<string, InstalledApplication> _cache;
 
         public MainWindow()
         {
@@ -49,12 +41,20 @@ namespace AltTabPlus
             if (!Directory.Exists(Constants.IconCacheDirectory))
                 Directory.CreateDirectory(Constants.IconCacheDirectory);
 
+            _cache = new Dictionary<string, InstalledApplication>();
             InstalledApplications = new ObservableCollection<InstalledApplication>();
 
             var data = LoadDataFromConfigFile();
             if (data.Any())
             {
-                data.ForEach(item => InstalledApplications.Add(item));
+                data.ForEach(item =>
+                {
+                    InstalledApplications.Add(item);
+                    if (!string.IsNullOrEmpty(item.HotKey))
+                    {
+                        _cache.Add(item.HotKey,item);
+                    }
+                });
             }
 
             LbApp.ItemsSource = InstalledApplications;
@@ -85,6 +85,17 @@ namespace AltTabPlus
 
             var filePath = openFileDialog.FileName;
             AddAppInfoToList(filePath);
+        }
+
+        private void SetShortcutButton_Click(object sender, RoutedEventArgs e)
+        {
+            _currentRecordButton = (ToggleButton)sender;
+            if (!_currentRecordButton.IsChecked.Value)
+            {
+                _isRecordingShortcut = true;
+            }
+
+
         }
 
         private void AddAppInfoToList(string filePath)
@@ -137,17 +148,14 @@ namespace AltTabPlus
 
         private IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
         {
-            // var messageCode = wParam.ToInt32();
-            // if (messageCode == (int)WindowMessage.WM_KEYUP)
-            // {
-            //     Dispatcher.Invoke(() => { MessageBox.Show("123"); });
-            // }
-            //
-            // KEYBDINPUT input = (KEYBDINPUT)Marshal.PtrToStructure(lParam,typeof(KEYBDINPUT));
-            //
-            // //Keys key = (Keys)wParam.ToInt32();
-            
-            return User32.CallNextHookEx(_globalKeyboardHook.Value,code, wParam, lParam);
+            var messageType = (WindowMessage)wParam.ToInt32();
+            if (messageType == WindowMessage.WM_KEYDOWN)
+            {
+                KEYBDINPUT input = (KEYBDINPUT)Marshal.PtrToStructure(lParam, typeof(KEYBDINPUT));
+                Keys keyData = (Keys)input.wVk;
+            }
+
+            return CallNextHookEx(_globalKeyboardHook.Value,code, wParam, lParam);
         }
     }
 }
