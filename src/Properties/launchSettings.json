@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AltTabPlus": {
+      "commandName": "Project",
+      "hotReloadEnabled": false,
+      "remoteDebugEnabled": false,
+      "nativeDebugging": false
+    }
+  }
+}

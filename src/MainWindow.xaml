@@ -5,15 +5,33 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AltTabPlus"
         mc:Ignorable="d"
-        Title="Alt+Tab+Plus" Height="700" Width="400">
+        WindowStartupLocation="CenterScreen"
+        Title="Alt+Tab+Plus" 
+        Height="700"
+        Width="500"
+        MinWidth="500">
     <Window.Resources>
         <Style TargetType="ListBox">
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="5"></Setter>
         </Style>
 
         <Style TargetType="ListBoxItem">
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="60"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid>
+                            <Border>
+                                <ContentPresenter />
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -47,6 +65,7 @@
 
         <!-- App List -->
         <ListBox 
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             Name="LbApp"
             Grid.Row="1"
             BorderThickness="0"
@@ -56,15 +75,37 @@
                     <Border>
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="90"/>
                             </Grid.ColumnDefinitions>
 
-                            <Image/>
-                            <TextBlock Grid.Column="1"/>
-                            <ToggleButton Grid.Column="2"/>
+                            <Image 
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Height="50" Width="50"/>
+
+                            <WrapPanel Grid.Column="1" Orientation="Vertical">
+                                <TextBlock 
+                                    FontSize="20"
+                                    Text="{Binding DisplayName}"/>
+                                <TextBlock
+                                    Margin="0 5 0 0"
+                                    Foreground="#666666"
+                                    FontSize="12"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTip="{Binding Location}"
+                                    Text="{Binding Location}"/>
+                            </WrapPanel>
+                            
+                            <ToggleButton
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="10 0 0 0"
+                                Content="{Binding HotKey,TargetNullValue=设置快捷键}"
+                                Width="80"
+                                Height="50"
+                                Grid.Column="2"/>
                         </Grid>
                     </Border>
                 </DataTemplate>
