@@ -43,6 +43,12 @@ namespace AltTabPlus
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            if (!Directory.Exists(Constants.DataDirectory))
+                Directory.CreateDirectory(Constants.DataDirectory);
+
+            if (!Directory.Exists(Constants.IconCacheDirectory))
+                Directory.CreateDirectory(Constants.IconCacheDirectory);
+
             InstalledApplications = new ObservableCollection<InstalledApplication>();
 
             var data = LoadDataFromConfigFile();
