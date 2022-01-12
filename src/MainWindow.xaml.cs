@@ -9,6 +9,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using static Vanara.PInvoke.User32;
+using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Path = System.IO.Path;
 
@@ -94,8 +95,6 @@ namespace AltTabPlus
             {
                 _isRecordingShortcut = true;
             }
-
-
         }
 
         private void AddAppInfoToList(string filePath)
@@ -148,14 +147,62 @@ namespace AltTabPlus
 
         private IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
         {
-            var messageType = (WindowMessage)wParam.ToInt32();
-            if (messageType == WindowMessage.WM_KEYDOWN)
+            var keyboardMessageType = (WindowMessage)wParam.ToInt32();
+            var keyboardInput = (KEYBDINPUT)Marshal.PtrToStructure(lParam, typeof(KEYBDINPUT));
+            var keyData = (Keys)keyboardInput.wVk;
+
+            if (keyboardMessageType is WindowMessage.WM_KEYDOWN or WindowMessage.WM_SYSKEYDOWN)
             {
-                KEYBDINPUT input = (KEYBDINPUT)Marshal.PtrToStructure(lParam, typeof(KEYBDINPUT));
-                Keys keyData = (Keys)input.wVk;
+                switch (keyData)
+                {
+                    case Keys.ControlKey or Keys.LControlKey or Keys.RControlKey:
+                        MessageBox.Show("ControlKey d");
+                        break;
+                    case Keys.LShiftKey or Keys.RShiftKey:
+                        MessageBox.Show("ShiftKey");
+                        break;
+                    case Keys.LMenu or Keys.RMenu:
+                        MessageBox.Show("Alt d");
+                        break;
+                    default:
+                        MessageBox.Show(keyData.ToString());
+                        break;
+                }
+            }
+
+            if (keyboardMessageType is WindowMessage.WM_KEYUP or WindowMessage.WM_SYSKEYUP)
+            {
+                switch (keyData)
+                {
+                    case Keys.ControlKey or Keys.LControlKey or Keys.RControlKey:
+                        MessageBox.Show("ControlKey u");
+                        break;
+                    case Keys.LShiftKey or Keys.RShiftKey:
+                        MessageBox.Show("ShiftKey");
+                        break;
+                    case Keys.LMenu or Keys.RMenu:
+                        MessageBox.Show("Alt p");
+                        break;
+                    default:
+                        MessageBox.Show(keyData.ToString());
+                        break;
+                }
             }
 
             return CallNextHookEx(_globalKeyboardHook.Value,code, wParam, lParam);
         }
+    }
+
+    public class Shortcut
+    {
+        public List<Modifiers> Modifiers { get; set; }
+        public string Key { get; set; }
+    }
+
+    public enum Modifiers
+    {
+        Control = 1,
+        Shift,
+        Alt
     }
 }
