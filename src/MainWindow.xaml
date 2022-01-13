@@ -102,7 +102,7 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Margin="10 0 0 0"
-                                Content="{Binding HotKey,TargetNullValue=设置快捷键}"
+                                Content="{Binding HotKey,TargetNullValue=设置快捷键,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                 Click="SetShortcutButton_Click"
                                 Tag="{Binding}"
                                 Width="80"

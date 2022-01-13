@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -206,9 +207,22 @@ namespace AltTabPlus
                 return;
             }
 
-            if (_cache.ContainsKey(ck))
-            {
+            if (!_cache.ContainsKey(ck)) 
+                return;
 
+            var app = _cache[ck];
+            var queryResult = Process.GetProcesses()
+                .ToList()
+                .FirstOrDefault(item =>item.MainModule?.FileName == app.Location);
+
+            if (queryResult != null)
+            {
+                NativeMethods.BringWindowToFront(queryResult.MainWindowTitle);
+            }
+            else
+            {
+                if(File.Exists(app.Location))
+                     Process.Start(app.Location);
             }
         }
 
