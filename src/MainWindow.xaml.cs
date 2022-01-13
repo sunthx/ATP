@@ -4,10 +4,12 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
@@ -21,6 +23,7 @@ namespace AltTabPlus
         private HookProc _keyboardHookProc;
 
         private bool _isRecordingShortcut;
+        private readonly Dictionary<int, Keys> _pressedKeys = new();           
         private ToggleButton _currentRecordButton;
 
         private Dictionary<string, InstalledApplication> _cache;
@@ -53,7 +56,7 @@ namespace AltTabPlus
                     InstalledApplications.Add(item);
                     if (!string.IsNullOrEmpty(item.HotKey))
                     {
-                        _cache.Add(item.HotKey,item);
+                        _cache.Add(item.HotKey, item);
                     }
                 });
             }
@@ -81,7 +84,7 @@ namespace AltTabPlus
             };
 
             var dialogResult = openFileDialog.ShowDialog(this);
-            if (!dialogResult.HasValue || !dialogResult.Value) 
+            if (!dialogResult.HasValue || !dialogResult.Value)
                 return;
 
             var filePath = openFileDialog.FileName;
@@ -91,10 +94,7 @@ namespace AltTabPlus
         private void SetShortcutButton_Click(object sender, RoutedEventArgs e)
         {
             _currentRecordButton = (ToggleButton)sender;
-            if (!_currentRecordButton.IsChecked.Value)
-            {
-                _isRecordingShortcut = true;
-            }
+            _isRecordingShortcut = _currentRecordButton.IsChecked.Value;
         }
 
         private void AddAppInfoToList(string filePath)
@@ -136,7 +136,7 @@ namespace AltTabPlus
         private void SaveConfig(List<InstalledApplication> applications)
         {
             var data = JsonConvert.SerializeObject(applications);
-            if(File.Exists(Constants.ConfigFilePath))
+            if (File.Exists(Constants.ConfigFilePath))
                 File.Delete(Constants.ConfigFilePath);
 
             using var fs = File.Create(Constants.ConfigFilePath);
@@ -153,43 +153,68 @@ namespace AltTabPlus
 
             if (keyboardMessageType is WindowMessage.WM_KEYDOWN or WindowMessage.WM_SYSKEYDOWN)
             {
-                switch (keyData)
-                {
-                    case Keys.ControlKey or Keys.LControlKey or Keys.RControlKey:
-                        MessageBox.Show("ControlKey d");
-                        break;
-                    case Keys.LShiftKey or Keys.RShiftKey:
-                        MessageBox.Show("ShiftKey");
-                        break;
-                    case Keys.LMenu or Keys.RMenu:
-                        MessageBox.Show("Alt d");
-                        break;
-                    default:
-                        MessageBox.Show(keyData.ToString());
-                        break;
-                }
+                OnKeyPressed(keyData);
             }
 
             if (keyboardMessageType is WindowMessage.WM_KEYUP or WindowMessage.WM_SYSKEYUP)
             {
-                switch (keyData)
-                {
-                    case Keys.ControlKey or Keys.LControlKey or Keys.RControlKey:
-                        MessageBox.Show("ControlKey u");
-                        break;
-                    case Keys.LShiftKey or Keys.RShiftKey:
-                        MessageBox.Show("ShiftKey");
-                        break;
-                    case Keys.LMenu or Keys.RMenu:
-                        MessageBox.Show("Alt p");
-                        break;
-                    default:
-                        MessageBox.Show(keyData.ToString());
-                        break;
-                }
+                OnKeyUp(keyData);
             }
 
-            return CallNextHookEx(_globalKeyboardHook.Value,code, wParam, lParam);
+            return CallNextHookEx(_globalKeyboardHook.Value, code, wParam, lParam);
+        }
+
+        private void OnKeyPressed(Keys key)
+        {
+            var keyIndex = GetKeyIndex(key);
+            if (_pressedKeys.Values.Count >= 4 || _pressedKeys.ContainsKey(keyIndex))
+                return;
+
+            _pressedKeys.Add(keyIndex, key);
+            var keys = _pressedKeys.Values.OrderByDescending(item => item).ToList();
+            var combinationKeys = string.Join('+', keys);
+            HandleCombinationKeyPressed(combinationKeys);
+        }
+
+        private void OnKeyUp(Keys key)
+        {
+            var keyIndex = GetKeyIndex(key);
+            if (_pressedKeys.ContainsKey(keyIndex))
+            {
+                _pressedKeys.Remove(keyIndex);
+            }
+        }
+
+        private int GetKeyIndex(Keys key)
+        {
+            // return key switch
+            // {
+            //     Keys.ControlKey or Keys.LControlKey or Keys.RControlKey => (int)Keys.Control,
+            //     Keys.Menu or Keys.LMenu or Keys.RMenu => (int)Keys.Alt,
+            //     Keys.ShiftKey or Keys.LShiftKey or Keys.RShiftKey => (int)Keys.Shift,
+            //     _ => (int)key
+            // };
+
+            return (int)key;
+        }
+
+        private void HandleCombinationKeyPressed(string ck)
+        {
+            if (_isRecordingShortcut)
+            {
+                SetShortcut(ck);
+                return;
+            }
+
+            if (_cache.ContainsKey(ck))
+            {
+
+            }
+        }
+
+        private void SetShortcut(string shortcut)
+        {
+            _currentRecordButton.Content = shortcut;
         }
     }
 
