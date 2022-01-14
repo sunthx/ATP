@@ -11,6 +11,9 @@
         Width="500"
         MinWidth="500">
     <Window.Resources>
+        
+        <local:BitmapImageConverter x:Key="ImageConverter"/>
+        
         <Style TargetType="ListBox">
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Margin" Value="5"></Setter>
@@ -81,6 +84,8 @@
                             </Grid.ColumnDefinitions>
 
                             <Image 
+                                Source="{Binding Icon,Converter={StaticResource ImageConverter}}"
+                                Stretch="None"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Height="50" Width="50"/>
@@ -99,6 +104,7 @@
                             </WrapPanel>
                             
                             <ToggleButton
+                                Name="TgbRecord"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Margin="10 0 0 0"

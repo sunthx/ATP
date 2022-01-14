@@ -5,12 +5,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
+using System.Windows.Media;
 using Newtonsoft.Json;
-using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
@@ -24,8 +24,10 @@ namespace AltTabPlus
         private HookProc _keyboardHookProc;
 
         private bool _isRecordingShortcut;
-        private readonly Dictionary<int, Keys> _pressedKeys = new();           
+        private readonly Dictionary<int, Keys> _pressedKeys = new();     
+        
         private ToggleButton _currentRecordButton;
+        private InstalledApplication _currentSelectedAppItem;
 
         private Dictionary<string, InstalledApplication> _cache;
 
@@ -49,23 +51,31 @@ namespace AltTabPlus
             _cache = new Dictionary<string, InstalledApplication>();
             InstalledApplications = new ObservableCollection<InstalledApplication>();
 
-            var data = LoadDataFromConfigFile();
-            if (data.Any())
-            {
-                data.ForEach(item =>
-                {
-                    InstalledApplications.Add(item);
-                    if (!string.IsNullOrEmpty(item.HotKey))
-                    {
-                        _cache.Add(item.HotKey, item);
-                    }
-                });
-            }
+            RefreshData(true);
 
             LbApp.ItemsSource = InstalledApplications;
 
             _keyboardHookProc = KeyboardHookProc;
             _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
+        }
+
+        private void RefreshData(bool isUpdateView = false)
+        {
+            var data = LoadDataFromConfigFile();
+            if (data.Any())
+            {
+                data.ForEach(item =>
+                {
+                    if(isUpdateView)
+                        InstalledApplications.Add(item);
+
+                    if (string.IsNullOrEmpty(item.HotKey)) 
+                        return;
+
+                    if(!_cache.ContainsKey(item.HotKey))
+                        _cache.Add(item.HotKey, item);
+                });
+            }
         }
 
         private void OnClosed(object? sender, EventArgs e)
@@ -94,8 +104,57 @@ namespace AltTabPlus
 
         private void SetShortcutButton_Click(object sender, RoutedEventArgs e)
         {
-            _currentRecordButton = (ToggleButton)sender;
-            _isRecordingShortcut = _currentRecordButton.IsChecked.Value;
+            if (sender is not ToggleButton toggleButton)
+                return;
+
+            _currentRecordButton = toggleButton;
+            if (_currentRecordButton.Tag is InstalledApplication application)
+            {
+                _currentSelectedAppItem = application;
+            }
+
+            _isRecordingShortcut = _currentRecordButton.IsChecked ?? false;
+            if (!_isRecordingShortcut)
+            {
+                StopRecordShortcut();
+                return;
+            }
+
+            GetRecordButtonFromListBoxItemDataTemplate().ForEach(item => item.IsChecked = false);
+            _currentRecordButton.IsChecked = true;
+        }
+
+        private List<ToggleButton> GetRecordButtonFromListBoxItemDataTemplate()
+        {
+            var result = new List<ToggleButton>();
+
+            for (int i = 0; i < LbApp.Items.Count; i++)
+            {
+                var contentPresenter = FindVisualChild<ContentPresenter>((ListBoxItem)LbApp.ItemContainerGenerator.ContainerFromItem(LbApp.Items[i]));
+                var dataTemplate = contentPresenter.ContentTemplate;
+                var target = (ToggleButton)dataTemplate.FindName("TgbRecord", contentPresenter);
+                result.Add(target);
+            }
+
+            return result;
+        }
+
+        private TChildItem FindVisualChild<TChildItem>(DependencyObject obj)
+            where TChildItem : DependencyObject
+        {
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+                var child = VisualTreeHelper.GetChild(obj, i);
+                if (child != null && child is TChildItem)
+                    return (TChildItem)child;
+                else
+                {
+                    var childOfChild = FindVisualChild<TChildItem>(child);
+                    if (childOfChild != null)
+                        return childOfChild;
+                }
+            }
+            return null;
         }
 
         private void AddAppInfoToList(string filePath)
@@ -174,6 +233,7 @@ namespace AltTabPlus
             _pressedKeys.Add(keyIndex, key);
             var keys = _pressedKeys.Values.OrderByDescending(item => item).ToList();
             var combinationKeys = string.Join('+', keys);
+
             HandleCombinationKeyPressed(combinationKeys);
         }
 
@@ -184,6 +244,8 @@ namespace AltTabPlus
             {
                 _pressedKeys.Remove(keyIndex);
             }
+
+            HandleCombinationKeyPressedUp();
         }
 
         private int GetKeyIndex(Keys key)
@@ -197,6 +259,20 @@ namespace AltTabPlus
             // };
 
             return (int)key;
+        }
+
+        private void HandleCombinationKeyPressedUp()
+        {
+            if(!_isRecordingShortcut)
+                return;
+
+            if (_pressedKeys.Count != 0)
+                return;
+
+            if (_isRecordingShortcut)
+            {
+                StopRecordShortcut();
+            }
         }
 
         private void HandleCombinationKeyPressed(string ck)
@@ -229,19 +305,13 @@ namespace AltTabPlus
         private void SetShortcut(string shortcut)
         {
             _currentRecordButton.Content = shortcut;
+            _currentSelectedAppItem.HotKey = shortcut;
         }
-    }
 
-    public class Shortcut
-    {
-        public List<Modifiers> Modifiers { get; set; }
-        public string Key { get; set; }
-    }
-
-    public enum Modifiers
-    {
-        Control = 1,
-        Shift,
-        Alt
+        private void StopRecordShortcut()
+        {
+            SaveConfig(InstalledApplications.ToList());
+            RefreshData(false);
+        }
     }
 }
