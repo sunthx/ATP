@@ -20,6 +20,16 @@ namespace AltTabPlus
         }
 
         /// <summary>
+        /// 还原窗口
+        /// </summary>
+        /// <param name="wnd"></param>
+        public static void BringWindowToFront(IntPtr wnd)
+        {
+            User32.ShowWindow(wnd, ShowWindowCommand.SW_SHOWNORMAL);
+            User32.SetForegroundWindow(wnd);
+        }
+
+        /// <summary>
         /// 提取并保存应用程序的图标文件
         /// </summary>            
         public static void ExtractAndSaveAppIconFile(string appExecuteFilePath,string saveFilePath)

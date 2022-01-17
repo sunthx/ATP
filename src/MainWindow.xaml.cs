@@ -287,13 +287,11 @@ namespace AltTabPlus
                 return;
 
             var app = _cache[ck];
-            var queryResult = Process.GetProcesses()
-                .ToList()
-                .FirstOrDefault(item =>item.MainModule?.FileName == app.Location);
+            var queryResult = GetTargetWindowInPtr(app.Location);
 
             if (queryResult != null)
             {
-                NativeMethods.BringWindowToFront(queryResult.MainWindowTitle);
+                NativeMethods.BringWindowToFront(queryResult);
             }
             else
             {
@@ -312,6 +310,14 @@ namespace AltTabPlus
         {
             SaveConfig(InstalledApplications.ToList());
             RefreshData(false);
+        }
+
+        private IntPtr GetTargetWindowInPtr(string filePath)
+        {
+            return Process.GetProcesses()
+                .Where(item => item.MainWindowHandle != IntPtr.Zero && item.MainModule?.FileName == filePath)
+                .Select(item => item.MainWindowHandle)
+                .FirstOrDefault();
         }
     }
 }
