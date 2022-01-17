@@ -53,7 +53,7 @@ namespace AltTabPlus
         public static User32.HHOOK RegisterKeyboardHook(User32.HookProc hookProcedure)
         {
             var moduleHandle =
-                Kernel32.GetModuleHandle(System.Diagnostics.Process.GetCurrentProcess().MainModule.ModuleName);
+                Kernel32.GetModuleHandle(System.Diagnostics.Process.GetCurrentProcess().MainModule?.ModuleName);
 
             var globalKeyboardHook = User32.SetWindowsHookEx(
                 User32.HookType.WH_KEYBOARD_LL,

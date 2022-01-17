@@ -80,7 +80,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="60"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
                             <Image 
@@ -111,7 +111,7 @@
                                 Content="{Binding HotKey,TargetNullValue=设置快捷键,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                 Click="SetShortcutButton_Click"
                                 Tag="{Binding}"
-                                Width="80"
+                                Width="200"
                                 Height="50"
                                 Grid.Column="2"/>
                         </Grid>

@@ -5,12 +5,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Media;
 using Newtonsoft.Json;
+using NLog;
 using static Vanara.PInvoke.User32;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
@@ -20,11 +23,12 @@ namespace AltTabPlus
 {
     public partial class MainWindow : Window
     {
-        private HHOOK? _globalKeyboardHook;
+        private HHOOK _globalKeyboardHook;
         private HookProc _keyboardHookProc;
+        private ILogger _logger = LogManager.GetCurrentClassLogger();
 
         private bool _isRecordingShortcut;
-        private readonly Dictionary<int, Keys> _pressedKeys = new();     
+        private readonly Dictionary<ushort, Keys> _pressedKeys = new();     
         
         private ToggleButton _currentRecordButton;
         private InstalledApplication _currentSelectedAppItem;
@@ -57,6 +61,7 @@ namespace AltTabPlus
 
             _keyboardHookProc = KeyboardHookProc;
             _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
+            StartListeningShortcut();
         }
 
         private void RefreshData(bool isUpdateView = false)
@@ -80,10 +85,7 @@ namespace AltTabPlus
 
         private void OnClosed(object? sender, EventArgs e)
         {
-            if (_globalKeyboardHook.HasValue)
-            {
-                NativeMethods.ReleaseWindowsHook(_globalKeyboardHook.Value);
-            }
+            NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
         }
 
         private void BtnAddApp_OnClick(object sender, RoutedEventArgs e)
@@ -152,7 +154,7 @@ namespace AltTabPlus
                     var childOfChild = FindVisualChild<TChildItem>(child);
                     if (childOfChild != null)
                         return childOfChild;
-                }
+                }      
             }
             return null;
         }
@@ -209,101 +211,49 @@ namespace AltTabPlus
         {
             var keyboardMessageType = (WindowMessage)wParam.ToInt32();
             var keyboardInput = (KEYBDINPUT)Marshal.PtrToStructure(lParam, typeof(KEYBDINPUT));
-            var keyData = (Keys)keyboardInput.wVk;
 
-            if (keyboardMessageType is WindowMessage.WM_KEYDOWN or WindowMessage.WM_SYSKEYDOWN)
+            var keyIndex = keyboardInput.wVk;
+            var key = (Keys)keyIndex;
+
+            _logger.Info($"{key} - {keyboardMessageType}");
+
+            if (keyboardMessageType is WindowMessage.WM_KEYDOWN or WindowMessage.WM_SYSKEYDOWN or WindowMessage.WM_KEYFIRST)
             {
-                OnKeyPressed(keyData);
+                _logger.Info($"{key} KeyPress");
+                AddKey(keyIndex, key);
+                _logger.Info($"{_pressedKeys.Values.Count} Key Pressed");
             }
 
             if (keyboardMessageType is WindowMessage.WM_KEYUP or WindowMessage.WM_SYSKEYUP)
             {
-                OnKeyUp(keyData);
+                _logger.Info($"{key} KeyUp");
+                RemoveKey(keyIndex);
             }
 
-            return CallNextHookEx(_globalKeyboardHook.Value, code, wParam, lParam);
+            return CallNextHookEx(_globalKeyboardHook, code, wParam, lParam);
         }
 
-        private void OnKeyPressed(Keys key)
+        private void AddKey(ushort vKey, Keys key)
         {
-            var keyIndex = GetKeyIndex(key);
-            if (_pressedKeys.Values.Count >= 4 || _pressedKeys.ContainsKey(keyIndex))
-                return;
-
-            _pressedKeys.Add(keyIndex, key);
-            var keys = _pressedKeys.Values.OrderByDescending(item => item).ToList();
-            var combinationKeys = string.Join('+', keys);
-
-            HandleCombinationKeyPressed(combinationKeys);
+            if(!_pressedKeys.ContainsKey(vKey))
+                _pressedKeys.Add(vKey, key);
         }
 
-        private void OnKeyUp(Keys key)
+        private void RemoveKey(ushort vKey)
         {
-            var keyIndex = GetKeyIndex(key);
-            if (_pressedKeys.ContainsKey(keyIndex))
+            if (_pressedKeys.ContainsKey(vKey))
             {
-                _pressedKeys.Remove(keyIndex);
-            }
-
-            HandleCombinationKeyPressedUp();
-        }
-
-        private int GetKeyIndex(Keys key)
-        {
-            // return key switch
-            // {
-            //     Keys.ControlKey or Keys.LControlKey or Keys.RControlKey => (int)Keys.Control,
-            //     Keys.Menu or Keys.LMenu or Keys.RMenu => (int)Keys.Alt,
-            //     Keys.ShiftKey or Keys.LShiftKey or Keys.RShiftKey => (int)Keys.Shift,
-            //     _ => (int)key
-            // };
-
-            return (int)key;
-        }
-
-        private void HandleCombinationKeyPressedUp()
-        {
-            if(!_isRecordingShortcut)
-                return;
-
-            if (_pressedKeys.Count != 0)
-                return;
-
-            if (_isRecordingShortcut)
-            {
-                StopRecordShortcut();
-            }
-        }
-
-        private void HandleCombinationKeyPressed(string ck)
-        {
-            if (_isRecordingShortcut)
-            {
-                SetShortcut(ck);
-                return;
-            }
-
-            if (!_cache.ContainsKey(ck)) 
-                return;
-
-            var app = _cache[ck];
-            var queryResult = GetTargetWindowInPtr(app.Location);
-
-            if (queryResult != null)
-            {
-                NativeMethods.BringWindowToFront(queryResult);
-            }
-            else
-            {
-                if(File.Exists(app.Location))
-                     Process.Start(app.Location);
+                _pressedKeys.Remove(vKey);
             }
         }
 
         private void SetShortcut(string shortcut)
         {
-            _currentRecordButton.Content = shortcut;
-            _currentSelectedAppItem.HotKey = shortcut;
+            Dispatcher.Invoke(() =>
+            {
+                _currentRecordButton.Content = shortcut;
+                _currentSelectedAppItem.HotKey = shortcut;
+            });
         }
 
         private void StopRecordShortcut()
@@ -312,12 +262,71 @@ namespace AltTabPlus
             RefreshData(false);
         }
 
-        private IntPtr GetTargetWindowInPtr(string filePath)
+        private IntPtr? GetTargetWindowInPtr(string filePath)
         {
             return Process.GetProcesses()
                 .Where(item => item.MainWindowHandle != IntPtr.Zero && item.MainModule?.FileName == filePath)
                 .Select(item => item.MainWindowHandle)
                 .FirstOrDefault();
+        }
+
+        private void StartListeningShortcut()
+        {
+            Task.Factory.StartNew(() =>
+            {
+                while (true)
+                {
+                    var lastCombinationKeys = string.Empty;
+                    if (_pressedKeys.Count != 0)
+                    {
+                        var combinationKeys = string.Join('+', _pressedKeys.Values.OrderByDescending(item => item));
+                        if (lastCombinationKeys != combinationKeys)
+                        {
+                            if (_isRecordingShortcut)
+                            {
+                                //录制
+                                RecordShortcut(combinationKeys);
+                            }
+                            else
+                            {
+                                //匹配
+                                MatchShortcut(combinationKeys);
+                            }
+
+                            lastCombinationKeys = combinationKeys;
+                        }
+                    }
+
+                    Thread.Sleep(100);
+                }
+            });
+            
+        }
+
+        private void RecordShortcut(string shortcut)
+        {
+            SetShortcut(shortcut);
+        }
+
+        private void MatchShortcut(string shortcut)
+        {
+            _logger.Info($"current shortcut:{shortcut}");
+
+            if (!_cache.ContainsKey(shortcut))
+                return;
+
+            var app = _cache[shortcut];
+            var queryResult = GetTargetWindowInPtr(app.Location);
+
+            if (queryResult.HasValue)
+            {
+                NativeMethods.BringWindowToFront(queryResult.Value);
+            }
+            else
+            {
+                if (File.Exists(app.Location))
+                    Process.Start(app.Location);
+            }
         }
     }
 }
