@@ -54,17 +54,11 @@ namespace ATP
             var moduleHandle =
                 Kernel32.GetModuleHandle(System.Diagnostics.Process.GetCurrentProcess().MainModule?.ModuleName);
 
-            using (var process = Process.GetCurrentProcess())
-            {
-                using (var module = process.MainModule)
-                {
-                    return User32.SetWindowsHookEx(
-                        User32.HookType.WH_KEYBOARD_LL,
-                        hookProcedure, 
-                        moduleHandle,
-                        0);
-                }
-            }
+            return User32.SetWindowsHookEx(
+                User32.HookType.WH_KEYBOARD_LL,
+                hookProcedure,
+                moduleHandle,
+                0);
         }
 
         /// <summary>

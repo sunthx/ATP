@@ -5,6 +5,8 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
+using NLog;
 
 namespace ATP
 {
@@ -13,5 +15,20 @@ namespace ATP
     /// </summary>
     public partial class App : Application
     {
+        public App()
+        {
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+            Application.Current.DispatcherUnhandledException += CurrentOnDispatcherUnhandledException;
+        }
+
+        private void CurrentOnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            LogManager.GetCurrentClassLogger().Error(e.Exception.Message);
+        }
+
+        private void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            LogManager.GetCurrentClassLogger().Error(e.ExceptionObject);
+        }
     }
 }

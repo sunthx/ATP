@@ -273,6 +273,7 @@ namespace ATP
             var queryResult = Process
                 .GetProcesses()
                 .FirstOrDefault(item => item.MainWindowHandle != IntPtr.Zero && item.MainModule?.ModuleName == app.FileName);
+            
             if (queryResult != default)
             {
                 NativeMethods.BringWindowToFront(queryResult.MainWindowHandle);
