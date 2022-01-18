@@ -5,9 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,10 +14,8 @@ using System.Windows.Forms;
 using System.Windows.Media;
 using Newtonsoft.Json;
 using NLog;
-using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 using Control = System.Windows.Forms.Control;
-using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Path = System.IO.Path;
 
@@ -27,13 +23,14 @@ namespace AltTabPlus
 {
     public partial class MainWindow : Window
     {
-        private SafeHHOOK _globalKeyboardHook;
-        private HookProc _keyboardHookProc;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();  
 
+        private SafeHHOOK _globalKeyboardHook;
+        private HookProc _keyboardHookProc;
+
+        private bool _isContinueWhenHandled = true;
         private bool _isRecordingShortcut;
-        private readonly Dictionary<int, Keys> _pressedKeys = new();     
-        
+
         private ToggleButton _currentRecordButton;
         private InstalledApplication _currentSelectedAppItem;
 
@@ -67,25 +64,7 @@ namespace AltTabPlus
             _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
         }
 
-        private void RefreshData(bool isUpdateView = false)
-        {
-            var data = LoadDataFromConfigFile();
-            if (data.Any())
-            {
-                data.ForEach(item =>
-                {
-                    if(isUpdateView)
-                        InstalledApplications.Add(item);
-
-                    if (string.IsNullOrEmpty(item.HotKey)) 
-                        return;
-
-                    if(!_cache.ContainsKey(item.HotKey))
-                        _cache.Add(item.HotKey, item);
-                });
-            }
-        }
-
+        
         private void OnClosed(object? sender, EventArgs e)
         {
             NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
@@ -135,7 +114,7 @@ namespace AltTabPlus
 
             for (var i = 0; i < LbApp.Items.Count; i++)
             {
-                var contentPresenter = FindVisualChild<ContentPresenter>((ListBoxItem)LbApp.ItemContainerGenerator.ContainerFromItem(LbApp.Items[i]));
+                var contentPresenter = Utils.FindVisualChild<ContentPresenter>((ListBoxItem)LbApp.ItemContainerGenerator.ContainerFromItem(LbApp.Items[i]));
                 var dataTemplate = contentPresenter.ContentTemplate;
                 var target = (ToggleButton)dataTemplate.FindName("TgbRecord", contentPresenter);
                 result.Add(target);
@@ -144,24 +123,33 @@ namespace AltTabPlus
             return result;
         }
 
-        private TChildItem FindVisualChild<TChildItem>(DependencyObject obj)
-            where TChildItem : DependencyObject
+        /// <summary>
+        /// 重加载数据
+        /// </summary>
+        /// <param name="isUpdateView">是否刷新GUI</param>
+        private void RefreshData(bool isUpdateView = false)
         {
-            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+            var data = LoadDataFromConfigFile();
+            if (data.Any())
             {
-                var child = VisualTreeHelper.GetChild(obj, i);
-                if (child != null && child is TChildItem)
-                    return (TChildItem)child;
-                else
+                data.ForEach(item =>
                 {
-                    var childOfChild = FindVisualChild<TChildItem>(child);
-                    if (childOfChild != null)
-                        return childOfChild;
-                }      
+                    if(isUpdateView)
+                        InstalledApplications.Add(item);
+
+                    if (string.IsNullOrEmpty(item.HotKey)) 
+                        return;
+
+                    if(!_cache.ContainsKey(item.HotKey))
+                        _cache.Add(item.HotKey, item);
+                });
             }
-            return null;
         }
 
+        /// <summary>
+        /// 将 App 加载到 GUI 上
+        /// </summary>
+        /// <param name="filePath"></param>
         private void AddAppInfoToList(string filePath)
         {
             if (InstalledApplications.Any(item => item.Location == filePath))
@@ -170,24 +158,16 @@ namespace AltTabPlus
             }
 
             var app = InstalledApplication.New(filePath);
-            var iconFilePath = GetAppIconFile(filePath);
+            var iconFilePath = Utils.GetAppIconFile(filePath);
             app.Icon = iconFilePath;
 
             InstalledApplications.Add(app);
             SaveConfig(InstalledApplications.ToList());
         }
 
-        private string GetAppIconFile(string filePath)
-        {
-            var destinationFile = Path.Combine(Constants.IconCacheDirectory,
-                $"{Path.GetFileNameWithoutExtension(filePath)}.png");
-            if (File.Exists(destinationFile))
-                return destinationFile;
-
-            NativeMethods.ExtractAndSaveAppIconFile(filePath, destinationFile);
-            return destinationFile;
-        }
-
+        /// <summary>
+        /// 从配置文件中加载
+        /// </summary>  
         private List<InstalledApplication> LoadDataFromConfigFile()
         {
             if (!File.Exists(Constants.ConfigFilePath))
@@ -198,18 +178,9 @@ namespace AltTabPlus
             return JsonConvert.DeserializeObject<List<InstalledApplication>>(data) ?? new();
         }
 
-        private void SaveConfig(List<InstalledApplication> applications)
-        {
-            var data = JsonConvert.SerializeObject(applications);
-            if (File.Exists(Constants.ConfigFilePath))
-                File.Delete(Constants.ConfigFilePath);
-
-            using var fs = File.Create(Constants.ConfigFilePath);
-            using var streamWriter = new StreamWriter(fs);
-            streamWriter.Write(data);
-            streamWriter.Flush();
-        }
-
+        /// <summary>
+        /// 键盘钩子处理函数
+        /// </summary>
         private IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
         {
             //https://github.com/Code52/carnac/blob/master/src/Carnac.Logic/KeyMonitor/InterceptKeys.cs
@@ -245,54 +216,55 @@ namespace AltTabPlus
             {
                 var shortcutString = shortcut.ToString();
                 _logger.Info($"{shortcutString}");
-                HandleShortcut(shortcutString);
+                var isHandled = HandleCombinationKeys(shortcutString);
+                if (isHandled && _isContinueWhenHandled)
+                    return (IntPtr)1;
             }
 
             
             return CallNextHookEx(_globalKeyboardHook, code, wParam, lParam);
         }
 
-        private void SetShortcut(string shortcut)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                _currentRecordButton.Content = shortcut;
-                _currentSelectedAppItem.HotKey = shortcut;
-            });
-        }
-
-        private void StopRecordShortcut()
-        {
-            SaveConfig(InstalledApplications.ToList());
-            RefreshData(false);
-        }
-
-        private void HandleShortcut(string combinationKeys)
+        /// <summary>
+        /// 处理组合键
+        /// </summary>     
+        private bool HandleCombinationKeys(string combinationKeys)
         {
             if (_isRecordingShortcut)
             {
                 //录制
                 RecordShortcut(combinationKeys);
+                return true;
             }
             else
             {
                 //匹配
-                MatchShortcut(combinationKeys);
+                return MatchShortcut(combinationKeys);
             }
         }
 
+        /// <summary>
+        /// 录制快捷键
+        /// </summary>                
         private void RecordShortcut(string shortcut)
         {
             SetShortcut(shortcut);
         }
 
-        private void MatchShortcut(string shortcut)
+        /// <summary>
+        /// 匹配快捷键
+        /// </summary>
+        /// <remarks>
+        /// 如果匹配成功，则执行对应的操作
+        /// </remarks>
+        private bool MatchShortcut(string shortcut)
         {
             _logger.Info($"current shortcut:{shortcut}");
 
             if (!_cache.ContainsKey(shortcut))
             {
                 _logger.Info($"not found 【{shortcut}】 process.");
+                return false;
             }
 
             var app = _cache[shortcut];
@@ -314,9 +286,56 @@ namespace AltTabPlus
                         Process.Start(app.Location);
                 });
             }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 设置快捷键
+        /// </summary>
+        /// <remarks>
+        /// 并不会持久化快捷键的设置
+        /// </remarks>
+        private void SetShortcut(string shortcut)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _currentRecordButton.Content = shortcut;
+                _currentSelectedAppItem.HotKey = shortcut;
+            });
+        }
+
+        /// <summary>
+        /// 停止录制快捷键
+        /// </summary>
+        private void StopRecordShortcut()
+        {
+            SaveConfig(InstalledApplications.ToList());
+            RefreshData(false);
+        }
+
+        /// <summary>
+        /// 保存当前配置
+        /// </summary>                     
+        private void SaveConfig(List<InstalledApplication> applications)
+        {
+            var data = JsonConvert.SerializeObject(applications);
+            if (File.Exists(Constants.ConfigFilePath))
+                File.Delete(Constants.ConfigFilePath);
+
+            using var fs = File.Create(Constants.ConfigFilePath);
+            using var streamWriter = new StreamWriter(fs);
+            streamWriter.Write(data);
+            streamWriter.Flush();
         }
     }
 
+    /// <summary>
+    /// 表示一个快捷键
+    /// </summary>
+    /// <remarks>
+    /// 修饰键 + 字母或者数字 
+    /// </remarks>
     public class Shortcut
     {
         public Shortcut(Keys key, KeyDirection keyDirection, bool altPressed, bool controlPressed, bool shiftPressed)
@@ -375,7 +394,6 @@ namespace AltTabPlus
 
     public class InstalledApplication
     {
-        public string Id { get; set; }
         public string DisplayName { get; set; }
         public string Location { get; set; }
         public string FileName { set; get; }
@@ -392,6 +410,38 @@ namespace AltTabPlus
             };
 
             return installApp;
+        }
+    }
+
+    public class Utils
+    {
+        public static string GetAppIconFile(string filePath)
+        {
+            var destinationFile = Path.Combine(Constants.IconCacheDirectory,
+                $"{Path.GetFileNameWithoutExtension(filePath)}.png");
+            if (File.Exists(destinationFile))
+                return destinationFile;
+
+            NativeMethods.ExtractAndSaveAppIconFile(filePath, destinationFile);
+            return destinationFile;
+        }
+
+        public static TChildItem FindVisualChild<TChildItem>(DependencyObject obj)
+            where TChildItem : DependencyObject
+        {
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+                var child = VisualTreeHelper.GetChild(obj, i);
+                if (child != null && child is TChildItem)
+                    return (TChildItem)child;
+                else
+                {
+                    var childOfChild = FindVisualChild<TChildItem>(child);
+                    if (childOfChild != null)
+                        return childOfChild;
+                }      
+            }
+            return null;
         }
     }
 }
