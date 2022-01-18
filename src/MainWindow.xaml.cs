@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -14,7 +16,9 @@ using System.Windows.Forms;
 using System.Windows.Media;
 using Newtonsoft.Json;
 using NLog;
+using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
+using Control = System.Windows.Forms.Control;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Path = System.IO.Path;
@@ -23,12 +27,12 @@ namespace AltTabPlus
 {
     public partial class MainWindow : Window
     {
-        private HHOOK _globalKeyboardHook;
+        private SafeHHOOK _globalKeyboardHook;
         private HookProc _keyboardHookProc;
-        private ILogger _logger = LogManager.GetCurrentClassLogger();
+        private readonly ILogger _logger = LogManager.GetCurrentClassLogger();  
 
         private bool _isRecordingShortcut;
-        private readonly Dictionary<ushort, Keys> _pressedKeys = new();     
+        private readonly Dictionary<int, Keys> _pressedKeys = new();     
         
         private ToggleButton _currentRecordButton;
         private InstalledApplication _currentSelectedAppItem;
@@ -61,7 +65,6 @@ namespace AltTabPlus
 
             _keyboardHookProc = KeyboardHookProc;
             _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
-            StartListeningShortcut();
         }
 
         private void RefreshData(bool isUpdateView = false)
@@ -130,7 +133,7 @@ namespace AltTabPlus
         {
             var result = new List<ToggleButton>();
 
-            for (int i = 0; i < LbApp.Items.Count; i++)
+            for (var i = 0; i < LbApp.Items.Count; i++)
             {
                 var contentPresenter = FindVisualChild<ContentPresenter>((ListBoxItem)LbApp.ItemContainerGenerator.ContainerFromItem(LbApp.Items[i]));
                 var dataTemplate = contentPresenter.ContentTemplate;
@@ -209,42 +212,44 @@ namespace AltTabPlus
 
         private IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
         {
-            var keyboardMessageType = (WindowMessage)wParam.ToInt32();
-            var keyboardInput = (KEYBDINPUT)Marshal.PtrToStructure(lParam, typeof(KEYBDINPUT));
+            //https://github.com/Code52/carnac/blob/master/src/Carnac.Logic/KeyMonitor/InterceptKeys.cs
+            var alt = (Control.ModifierKeys & Keys.Alt) != 0;
+            var control = (Control.ModifierKeys & Keys.Control) != 0;
+            var shift = (Control.ModifierKeys & Keys.Shift) != 0;
+            var keyDown = wParam == (IntPtr)WindowMessage.WM_KEYDOWN;
+            var keyUp = wParam == (IntPtr)WindowMessage.WM_KEYUP;
+            var vkCode = Marshal.ReadInt32(lParam);
+            var key = (Keys)vkCode;
 
-            var keyIndex = keyboardInput.wVk;
-            var key = (Keys)keyIndex;
-
-            _logger.Info($"{key} - {keyboardMessageType}");
-
-            if (keyboardMessageType is WindowMessage.WM_KEYDOWN or WindowMessage.WM_SYSKEYDOWN or WindowMessage.WM_KEYFIRST)
+            //http://msdn.microsoft.com/en-us/library/windows/desktop/ms646286(v=vs.85).aspx
+            if (key != Keys.RMenu && key != Keys.LMenu && wParam == (IntPtr)WindowMessage.WM_SYSKEYDOWN)
             {
-                _logger.Info($"{key} KeyPress");
-                AddKey(keyIndex, key);
-                _logger.Info($"{_pressedKeys.Values.Count} Key Pressed");
+                alt = true;
+                keyDown = true;
+            }
+            if (key != Keys.RMenu && key != Keys.LMenu && wParam == (IntPtr)WindowMessage.WM_SYSKEYUP)
+            {
+                alt = true;
+                keyUp = true;
             }
 
-            if (keyboardMessageType is WindowMessage.WM_KEYUP or WindowMessage.WM_SYSKEYUP)
+            var shortcut = new Shortcut(
+                key,
+                keyDown ?
+                    KeyDirection.Down : keyUp
+                        ? KeyDirection.Up : KeyDirection.Unknown,
+                alt, control, shift);
+
+            var isValid = shortcut.IsValid();
+            if (isValid)
             {
-                _logger.Info($"{key} KeyUp");
-                RemoveKey(keyIndex);
+                var shortcutString = shortcut.ToString();
+                _logger.Info($"{shortcutString}");
+                HandleShortcut(shortcutString);
             }
 
+            
             return CallNextHookEx(_globalKeyboardHook, code, wParam, lParam);
-        }
-
-        private void AddKey(ushort vKey, Keys key)
-        {
-            if(!_pressedKeys.ContainsKey(vKey))
-                _pressedKeys.Add(vKey, key);
-        }
-
-        private void RemoveKey(ushort vKey)
-        {
-            if (_pressedKeys.ContainsKey(vKey))
-            {
-                _pressedKeys.Remove(vKey);
-            }
         }
 
         private void SetShortcut(string shortcut)
@@ -262,45 +267,18 @@ namespace AltTabPlus
             RefreshData(false);
         }
 
-        private IntPtr? GetTargetWindowInPtr(string filePath)
+        private void HandleShortcut(string combinationKeys)
         {
-            return Process.GetProcesses()
-                .Where(item => item.MainWindowHandle != IntPtr.Zero && item.MainModule?.FileName == filePath)
-                .Select(item => item.MainWindowHandle)
-                .FirstOrDefault();
-        }
-
-        private void StartListeningShortcut()
-        {
-            Task.Factory.StartNew(() =>
+            if (_isRecordingShortcut)
             {
-                while (true)
-                {
-                    var lastCombinationKeys = string.Empty;
-                    if (_pressedKeys.Count != 0)
-                    {
-                        var combinationKeys = string.Join('+', _pressedKeys.Values.OrderByDescending(item => item));
-                        if (lastCombinationKeys != combinationKeys)
-                        {
-                            if (_isRecordingShortcut)
-                            {
-                                //录制
-                                RecordShortcut(combinationKeys);
-                            }
-                            else
-                            {
-                                //匹配
-                                MatchShortcut(combinationKeys);
-                            }
-
-                            lastCombinationKeys = combinationKeys;
-                        }
-                    }
-
-                    Thread.Sleep(100);
-                }
-            });
-            
+                //录制
+                RecordShortcut(combinationKeys);
+            }
+            else
+            {
+                //匹配
+                MatchShortcut(combinationKeys);
+            }
         }
 
         private void RecordShortcut(string shortcut)
@@ -313,20 +291,107 @@ namespace AltTabPlus
             _logger.Info($"current shortcut:{shortcut}");
 
             if (!_cache.ContainsKey(shortcut))
-                return;
+            {
+                _logger.Info($"not found 【{shortcut}】 process.");
+            }
 
             var app = _cache[shortcut];
-            var queryResult = GetTargetWindowInPtr(app.Location);
+            _logger.Info($"found 【{shortcut}】 process {app.Location}.");
 
-            if (queryResult.HasValue)
+            var queryResult = Process
+                .GetProcesses()
+                .FirstOrDefault(item => item.MainWindowHandle != IntPtr.Zero && item.MainModule?.ModuleName == app.FileName);
+            if (queryResult != default)
             {
-                NativeMethods.BringWindowToFront(queryResult.Value);
+                NativeMethods.BringWindowToFront(queryResult.MainWindowHandle);
             }
             else
             {
-                if (File.Exists(app.Location))
-                    Process.Start(app.Location);
+                _logger.Info($"【{shortcut}】 handle process not running, start app ({app.Location}).");
+                Task.Factory.StartNew(() =>
+                {
+                    if (File.Exists(app.Location))
+                        Process.Start(app.Location);
+                });
             }
+        }
+    }
+
+    public class Shortcut
+    {
+        public Shortcut(Keys key, KeyDirection keyDirection, bool altPressed, bool controlPressed, bool shiftPressed)
+        {
+            AltPressed = altPressed;
+            ControlPressed = controlPressed;
+            Key = key;
+            KeyDirection = keyDirection;
+            ShiftPressed = shiftPressed;
+        }
+
+        public bool AltPressed { get; private set; }
+        public bool ControlPressed { get; private set; }
+        public bool ShiftPressed { get; private set; }
+        public Keys Key { get; private set; }
+        public KeyDirection KeyDirection { get; private set; }
+
+        public bool IsValid()
+        {
+            return (AltPressed || ControlPressed || ShiftPressed) && (IsLetter() || IsNumber()) && KeyDirection == KeyDirection.Down;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            if (ControlPressed)
+                sb.Append("Ctrl + ");
+            if (ShiftPressed)
+                sb.Append("Shift + ");
+            if (AltPressed)
+                sb.Append("Alt + ");
+
+            var keyString = IsNumber() ? Key.ToString().Remove(0,1) :  Key.ToString();
+            sb.Append(keyString);
+
+            return sb.ToString();
+        }
+
+        public bool IsLetter()
+        {
+            return Key is >= Keys.A and <= Keys.Z;
+        }
+
+        public bool IsNumber()
+        {
+            return Key is >= Keys.D0 and <= Keys.D9;
+        }
+    }
+
+    public enum KeyDirection
+    {
+        Down,
+        Up,
+        Unknown
+    }
+
+    public class InstalledApplication
+    {
+        public string Id { get; set; }
+        public string DisplayName { get; set; }
+        public string Location { get; set; }
+        public string FileName { set; get; }
+        public string Icon { get; set; }
+        public string HotKey { get; set; }
+
+        public static InstalledApplication New(string appFilePath)
+        {
+            var installApp = new InstalledApplication
+            {
+                Location = appFilePath,
+                DisplayName = Path.GetFileNameWithoutExtension(appFilePath),
+                FileName = Path.GetFileName(appFilePath)
+            };
+
+            return installApp;
         }
     }
 }

@@ -50,18 +50,22 @@ namespace AltTabPlus
         /// <summary>
         /// 注册一个全局的键盘Hook
         /// </summary>
-        public static User32.HHOOK RegisterKeyboardHook(User32.HookProc hookProcedure)
+        public static User32.SafeHHOOK RegisterKeyboardHook(User32.HookProc hookProcedure)
         {
             var moduleHandle =
                 Kernel32.GetModuleHandle(System.Diagnostics.Process.GetCurrentProcess().MainModule?.ModuleName);
 
-            var globalKeyboardHook = User32.SetWindowsHookEx(
-                User32.HookType.WH_KEYBOARD_LL,
-                hookProcedure, 
-                moduleHandle,
-                0);
-
-            return globalKeyboardHook;
+            using (var process = Process.GetCurrentProcess())
+            {
+                using (var module = process.MainModule)
+                {
+                    return User32.SetWindowsHookEx(
+                        User32.HookType.WH_KEYBOARD_LL,
+                        hookProcedure, 
+                        moduleHandle,
+                        0);
+                }
+            }
         }
 
         /// <summary>
