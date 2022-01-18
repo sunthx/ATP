@@ -19,11 +19,11 @@ using Control = System.Windows.Forms.Control;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Path = System.IO.Path;
 
-namespace AltTabPlus
+namespace ATP
 {
     public partial class MainWindow : Window
     {
-        private readonly ILogger _logger = LogManager.GetCurrentClassLogger();  
+        private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
         private SafeHHOOK _globalKeyboardHook;
         private HookProc _keyboardHookProc;
@@ -64,8 +64,8 @@ namespace AltTabPlus
             _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
         }
 
-        
-        private void OnClosed(object? sender, EventArgs e)
+
+        private void OnClosed(object sender, EventArgs e)
         {
             NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
         }
@@ -88,7 +88,7 @@ namespace AltTabPlus
 
         private void SetShortcutButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is not ToggleButton toggleButton)
+            if (!(sender is ToggleButton toggleButton))
                 return;
 
             _currentRecordButton = toggleButton;
@@ -134,13 +134,13 @@ namespace AltTabPlus
             {
                 data.ForEach(item =>
                 {
-                    if(isUpdateView)
+                    if (isUpdateView)
                         InstalledApplications.Add(item);
 
-                    if (string.IsNullOrEmpty(item.HotKey)) 
+                    if (string.IsNullOrEmpty(item.HotKey))
                         return;
 
-                    if(!_cache.ContainsKey(item.HotKey))
+                    if (!_cache.ContainsKey(item.HotKey))
                         _cache.Add(item.HotKey, item);
                 });
             }
@@ -171,11 +171,11 @@ namespace AltTabPlus
         private List<InstalledApplication> LoadDataFromConfigFile()
         {
             if (!File.Exists(Constants.ConfigFilePath))
-                return new();
+                return new List<InstalledApplication>();
 
 
             var data = File.ReadAllText(Constants.ConfigFilePath);
-            return JsonConvert.DeserializeObject<List<InstalledApplication>>(data) ?? new();
+            return JsonConvert.DeserializeObject<List<InstalledApplication>>(data) ?? new List<InstalledApplication>();
         }
 
         /// <summary>
@@ -221,7 +221,7 @@ namespace AltTabPlus
                     return (IntPtr)1;
             }
 
-            
+
             return CallNextHookEx(_globalKeyboardHook, code, wParam, lParam);
         }
 
@@ -323,10 +323,14 @@ namespace AltTabPlus
             if (File.Exists(Constants.ConfigFilePath))
                 File.Delete(Constants.ConfigFilePath);
 
-            using var fs = File.Create(Constants.ConfigFilePath);
-            using var streamWriter = new StreamWriter(fs);
-            streamWriter.Write(data);
-            streamWriter.Flush();
+            using (var fs = File.Create(Constants.ConfigFilePath))
+            {
+                using (var streamWriter = new StreamWriter(fs))
+                {
+                    streamWriter.Write(data);
+                    streamWriter.Flush();
+                }
+            }
         }
     }
 
@@ -368,7 +372,7 @@ namespace AltTabPlus
             if (AltPressed)
                 sb.Append("Alt + ");
 
-            var keyString = IsNumber() ? Key.ToString().Remove(0,1) :  Key.ToString();
+            var keyString = IsNumber() ? Key.ToString().Remove(0, 1) : Key.ToString();
             sb.Append(keyString);
 
             return sb.ToString();
@@ -376,12 +380,12 @@ namespace AltTabPlus
 
         public bool IsLetter()
         {
-            return Key is >= Keys.A and <= Keys.Z;
+            return Key >= Keys.A && Key <= Keys.Z;
         }
 
         public bool IsNumber()
         {
-            return Key is >= Keys.D0 and <= Keys.D9;
+            return Key >= Keys.D0 && Key <= Keys.D9;
         }
     }
 
@@ -439,7 +443,7 @@ namespace AltTabPlus
                     var childOfChild = FindVisualChild<TChildItem>(child);
                     if (childOfChild != null)
                         return childOfChild;
-                }      
+                }
             }
             return null;
         }
