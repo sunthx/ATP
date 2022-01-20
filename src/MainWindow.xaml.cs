@@ -12,6 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Media;
+using AdonisUI.Controls;
 using Newtonsoft.Json;
 using NLog;
 using static Vanara.PInvoke.User32;
@@ -21,7 +22,7 @@ using Path = System.IO.Path;
 
 namespace ATP
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : AdonisWindow
     {
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
@@ -61,20 +62,20 @@ namespace ATP
             LbApp.ItemsSource = InstalledApplications;
 
             _keyboardHookProc = KeyboardHookProc;
-            _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
+            //_globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
         }
 
 
         private void OnClosed(object sender, EventArgs e)
         {
-            NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
+            //NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
         }
 
         private void BtnAddApp_OnClick(object sender, RoutedEventArgs e)
         {
             var openFileDialog = new OpenFileDialog
             {
-                Filter = "应用程序|*.exe",
+                Filter = "Application|*.exe",
                 Multiselect = false
             };
 

@@ -1,40 +1,25 @@
-﻿<Window x:Class="ATP.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:atp="clr-namespace:ATP"
-        mc:Ignorable="d"
-        WindowStartupLocation="CenterScreen"
-        Title="Alt+Tab+Plus" 
-        Height="700"
-        Width="500"
-        MinWidth="500">
+﻿<controls:AdonisWindow x:Class="ATP.MainWindow"
+              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:atp="clr-namespace:ATP"
+              xmlns:controls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+              mc:Ignorable="d"
+              WindowStartupLocation="CenterScreen"
+              Title="Alt+Tab+Plus" 
+              Height="700"
+              Width="400"
+              MinWidth="400">
+    <Window.Style>
+        <Style TargetType="Window" BasedOn="{StaticResource {x:Type Window}}"/>
+    </Window.Style>
     <Window.Resources>
-
         <atp:BitmapImageConverter x:Key="ImageConverter"/>
-
         <Style TargetType="ListBox">
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Margin" Value="5"></Setter>
         </Style>
-
-        <Style TargetType="ListBoxItem">
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Height" Value="60"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Grid>
-                            <Border>
-                                <ContentPresenter />
-                            </Border>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -50,14 +35,12 @@
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
-                <WrapPanel 
-                    VerticalAlignment="Center" 
-                    HorizontalAlignment="Left"
-                    Margin="10 0 10 0">
+                <WrapPanel Grid.Column="1" 
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right">
                     <Button
                         Margin="0 0 10 0"
-                        Command="{Binding AddAppCommand}"
-                        Content="添加"
+                        Content="Add"
                         Name="BtnAddApp"
                         Click="BtnAddApp_OnClick"
                         Width="80" 
@@ -72,6 +55,8 @@
             Name="LbApp"
             Grid.Row="1"
             BorderThickness="0"
+            Background="Transparent"
+            HorizontalAlignment="Stretch"
             BorderBrush="Transparent">
             <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -88,30 +73,24 @@
                                 Stretch="None"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                Height="50" Width="50"/>
+                                Height="60" 
+                                Width="60"/>
 
-                            <WrapPanel Grid.Column="1" Orientation="Vertical">
-                                <TextBlock 
-                                    FontSize="20"
-                                    Text="{Binding DisplayName}"/>
-                                <TextBlock
-                                    Margin="0 5 0 0"
-                                    Foreground="#666666"
-                                    FontSize="12"
-                                    TextTrimming="CharacterEllipsis"
-                                    ToolTip="{Binding Location}"
-                                    Text="{Binding Location}"/>
-                            </WrapPanel>
+                            <TextBlock 
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                FontSize="20"
+                                Text="{Binding DisplayName}"/>
 
                             <ToggleButton
                                 Name="TgbRecord"
-                                HorizontalAlignment="Center"
+                                HorizontalAlignment="Right"
                                 VerticalAlignment="Center"
                                 Margin="10 0 0 0"
                                 Content="{Binding HotKey,TargetNullValue=设置快捷键,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                 Click="SetShortcutButton_Click"
                                 Tag="{Binding}"
-                                Width="200"
+                                Width="120"
                                 Height="50"
                                 Grid.Column="2"/>
                         </Grid>
@@ -121,8 +100,18 @@
         </ListBox>
 
         <!-- Status -->
-        <Border Grid.Row="2">
-
+        <Border Grid.Row="2" Height="50">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <TextBlock 
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Text="Version 0.1 build 20220120"/>
+            </Grid>
         </Border>
     </Grid>
-</Window>
+</controls:AdonisWindow>
