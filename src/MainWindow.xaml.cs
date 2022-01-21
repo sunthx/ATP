@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ using System.Windows.Media;
 using AdonisUI.Controls;
 using Newtonsoft.Json;
 using NLog;
+using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 using Control = System.Windows.Forms.Control;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
@@ -29,22 +31,26 @@ namespace ATP
         private SafeHHOOK _globalKeyboardHook;
         private HookProc _keyboardHookProc;
 
-        private bool _isContinueWhenHandled = true;
+        private bool _isContinueWhenHandled = false;
         private bool _isRecordingShortcut;
 
         private ToggleButton _currentRecordButton;
-        private InstalledApplication _currentSelectedAppItem;
+        private InstalledApp _currentSelectedAppItem;
 
-        private Dictionary<string, InstalledApplication> _cache;
+        private Dictionary<string, InstalledApp> _cache;
+        private readonly uint _currentProcessId;
 
         public MainWindow()
         {
             InitializeComponent();
             Loaded += MainWindow_Loaded;
             Closed += OnClosed;
+
+            TbVersion.Text = $"version {Assembly.GetExecutingAssembly().GetName().Version}";
+            _currentProcessId = (uint)Process.GetCurrentProcess().Id;
         }
 
-        public ObservableCollection<InstalledApplication> InstalledApplications { get; set; }
+        public ObservableCollection<InstalledApp> InstalledApplications { get; set; }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -54,21 +60,21 @@ namespace ATP
             if (!Directory.Exists(Constants.IconCacheDirectory))
                 Directory.CreateDirectory(Constants.IconCacheDirectory);
 
-            _cache = new Dictionary<string, InstalledApplication>();
-            InstalledApplications = new ObservableCollection<InstalledApplication>();
+            _cache = new Dictionary<string, InstalledApp>();
+            InstalledApplications = new ObservableCollection<InstalledApp>();
 
             RefreshData(true);
 
             LbApp.ItemsSource = InstalledApplications;
 
             _keyboardHookProc = KeyboardHookProc;
-            //_globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
+            _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
         }
 
 
         private void OnClosed(object sender, EventArgs e)
         {
-            //NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
+            NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
         }
 
         private void BtnAddApp_OnClick(object sender, RoutedEventArgs e)
@@ -93,7 +99,7 @@ namespace ATP
                 return;
 
             _currentRecordButton = toggleButton;
-            if (_currentRecordButton.Tag is InstalledApplication application)
+            if (_currentRecordButton.Tag is InstalledApp application)
             {
                 _currentSelectedAppItem = application;
             }
@@ -158,7 +164,7 @@ namespace ATP
                 return;
             }
 
-            var app = InstalledApplication.New(filePath);
+            var app = InstalledApp.New(filePath);
             var iconFilePath = Utils.GetAppIconFile(filePath);
             app.Icon = iconFilePath;
 
@@ -169,14 +175,14 @@ namespace ATP
         /// <summary>
         /// 从配置文件中加载
         /// </summary>  
-        private List<InstalledApplication> LoadDataFromConfigFile()
+        private List<InstalledApp> LoadDataFromConfigFile()
         {
             if (!File.Exists(Constants.ConfigFilePath))
-                return new List<InstalledApplication>();
+                return new List<InstalledApp>();
 
 
             var data = File.ReadAllText(Constants.ConfigFilePath);
-            return JsonConvert.DeserializeObject<List<InstalledApplication>>(data) ?? new List<InstalledApplication>();
+            return JsonConvert.DeserializeObject<List<InstalledApp>>(data) ?? new List<InstalledApp>();
         }
 
         /// <summary>
@@ -205,21 +211,25 @@ namespace ATP
                 keyUp = true;
             }
 
-            var shortcut = new Shortcut(
+            var combinationKeys = new CombinationKeys(
                 key,
                 keyDown ?
                     KeyDirection.Down : keyUp
                         ? KeyDirection.Up : KeyDirection.Unknown,
                 alt, control, shift);
 
-            var isValid = shortcut.IsValid();
+            var isValid = combinationKeys.IsValid();
             if (isValid)
             {
-                var shortcutString = shortcut.ToString();
+                var shortcutString = combinationKeys.ToString();
                 _logger.Info($"{shortcutString}");
                 var isHandled = HandleCombinationKeys(shortcutString);
-                if (isHandled && _isContinueWhenHandled)
+                if (isHandled && !_isContinueWhenHandled)
                     return (IntPtr)1;
+            }
+            else if (combinationKeys.IsAnyKeyPressed() && _isRecordingShortcut)
+            {
+                StopRecordShortcut();
             }
 
 
@@ -277,7 +287,7 @@ namespace ATP
             
             if (queryResult != default)
             {
-                NativeMethods.BringWindowToFront(queryResult.MainWindowHandle);
+                NativeMethods.BringWindowToFront(_currentProcessId,queryResult.MainWindowHandle);
             }
             else
             {
@@ -319,7 +329,7 @@ namespace ATP
         /// <summary>
         /// 保存当前配置
         /// </summary>                     
-        private void SaveConfig(List<InstalledApplication> applications)
+        private void SaveConfig(List<InstalledApp> applications)
         {
             var data = JsonConvert.SerializeObject(applications);
             if (File.Exists(Constants.ConfigFilePath))
@@ -337,14 +347,14 @@ namespace ATP
     }
 
     /// <summary>
-    /// 表示一个快捷键
+    /// 表示一个组合键
     /// </summary>
     /// <remarks>
     /// 修饰键 + 字母或者数字 
     /// </remarks>
-    public class Shortcut
+    public class CombinationKeys
     {
-        public Shortcut(Keys key, KeyDirection keyDirection, bool altPressed, bool controlPressed, bool shiftPressed)
+        public CombinationKeys(Keys key, KeyDirection keyDirection, bool altPressed, bool controlPressed, bool shiftPressed)
         {
             AltPressed = altPressed;
             ControlPressed = controlPressed;
@@ -361,7 +371,7 @@ namespace ATP
 
         public bool IsValid()
         {
-            return (AltPressed || ControlPressed || ShiftPressed) && (IsLetter() || IsNumber()) && KeyDirection == KeyDirection.Down;
+            return  IsModifierKeyPressed() && IsCommonKeyPressed();
         }
 
         public override string ToString()
@@ -389,6 +399,21 @@ namespace ATP
         {
             return Key >= Keys.D0 && Key <= Keys.D9;
         }
+
+        public bool IsAnyKeyPressed()
+        {
+            return IsModifierKeyPressed() || IsCommonKeyPressed();
+        }
+
+        private bool IsCommonKeyPressed()
+        {
+            return (IsLetter() || IsNumber()) && KeyDirection == KeyDirection.Down;
+        }
+
+        private bool IsModifierKeyPressed()
+        {
+            return (AltPressed || ControlPressed || ShiftPressed);
+        }
     }
 
     public enum KeyDirection
@@ -398,7 +423,7 @@ namespace ATP
         Unknown
     }
 
-    public class InstalledApplication
+    public class InstalledApp
     {
         public string DisplayName { get; set; }
         public string Location { get; set; }
@@ -406,9 +431,9 @@ namespace ATP
         public string Icon { get; set; }
         public string HotKey { get; set; }
 
-        public static InstalledApplication New(string appFilePath)
+        public static InstalledApp New(string appFilePath)
         {
-            var installApp = new InstalledApplication
+            var installApp = new InstalledApp
             {
                 Location = appFilePath,
                 DisplayName = Path.GetFileNameWithoutExtension(appFilePath),

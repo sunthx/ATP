@@ -7,7 +7,7 @@
               xmlns:controls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
               mc:Ignorable="d"
               WindowStartupLocation="CenterScreen"
-              Title="Alt+Tab+Plus" 
+              Title="TabAltPlus" 
               Height="700"
               Width="400"
               MinWidth="400">
@@ -102,13 +102,9 @@
         <!-- Status -->
         <Border Grid.Row="2" Height="50">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
                 <TextBlock 
-                    Grid.Column="1"
+                    Name="TbVersion"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Text="Version 0.1 build 20220120"/>
             </Grid>

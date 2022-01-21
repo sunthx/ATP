@@ -10,28 +10,27 @@ namespace ATP
         /// <summary>
         /// 还原窗口
         /// </summary>
-        /// <param name="name"></param>
-        public static void BringWindowToFront(string name)
+        public static void BringWindowToFront(uint curProcessId, IntPtr wnd)
         {
-            var wnd = User32.FindWindow(null, name);
+            var hForeWnd = User32.GetForegroundWindow();
+            uint currentProcessId = (uint)curProcessId;
+
+            User32.GetWindowThreadProcessId(hForeWnd, out var processId);
+            User32.AttachThreadInput(currentProcessId, processId, true);
+            User32.SetForegroundWindow(wnd);
             User32.ShowWindow(wnd, ShowWindowCommand.SW_NORMAL);
+            User32.SetWindowPos(wnd, HWND.HWND_TOPMOST, 0, 0, 0, 0,
+                User32.SetWindowPosFlags.SWP_NOSIZE | User32.SetWindowPosFlags.SWP_NOMOVE);
+            User32.SetWindowPos(wnd, HWND.HWND_NOTOPMOST, 0, 0, 0, 0,
+                User32.SetWindowPosFlags.SWP_NOSIZE | User32.SetWindowPosFlags.SWP_NOMOVE);
             User32.SetForegroundWindow(wnd);
+            User32.AttachThreadInput(currentProcessId, processId, false);
         }
 
         /// <summary>
-        /// 还原窗口
-        /// </summary>
-        /// <param name="wnd"></param>
-        public static void BringWindowToFront(IntPtr wnd)
-        {
-            User32.ShowWindow(wnd, ShowWindowCommand.SW_SHOWNORMAL);
-            User32.SetForegroundWindow(wnd);
-        }
-
-        /// <summary>
-        /// 提取并保存应用程序的图标文件
+        /// 提取并保存应用程序的图标文件@
         /// </summary>            
-        public static void ExtractAndSaveAppIconFile(string appExecuteFilePath,string saveFilePath)
+        public static void ExtractAndSaveAppIconFile(string appExecuteFilePath, string saveFilePath)
         {
             Shell32.SHFILEINFO shinfo = new Shell32.SHFILEINFO();
 
@@ -68,5 +67,5 @@ namespace ATP
         {
             return User32.UnhookWindowsHookEx(hook);
         }
-    }                                                          
+    }
 }
