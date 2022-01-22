@@ -1,98 +1,87 @@
-﻿<controls:AdonisWindow x:Class="ATP.MainWindow"
-              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-              xmlns:atp="clr-namespace:ATP"
-              xmlns:controls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
-              mc:Ignorable="d"
-              WindowStartupLocation="CenterScreen"
-              Title="TabAltPlus" 
-              Height="700"
-              Width="400"
-              MinWidth="400">
-    <Window.Style>
-        <Style TargetType="Window" BasedOn="{StaticResource {x:Type Window}}"/>
-    </Window.Style>
-    <Window.Resources>
-        <atp:BitmapImageConverter x:Key="ImageConverter"/>
-        <Style TargetType="ListBox">
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Margin" Value="5"></Setter>
-        </Style>
-    </Window.Resources>
+﻿<controls:TheWindow x:Class="ATP.MainWindow"
+                    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:atp="clr-namespace:ATP"
+                    xmlns:controls="clr-namespace:ATP.Theme.Controls"
+                    mc:Ignorable="d"
+                    WindowStartupLocation="CenterScreen"
+                    Title="TabAltPlus"
+                    Height="700"
+                    Width="400"
+                    MinWidth="400">
+    <controls:TheWindow.Resources>
+        <atp:BitmapImageConverter x:Key="ImageConverter" />
+    </controls:TheWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <!-- Menu -->
-        <Border Grid.Row="0" Height="40" Background="#333333">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-
-                <WrapPanel Grid.Column="1" 
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Right">
-                    <Button
-                        Margin="0 0 10 0"
-                        Content="Add"
-                        Name="BtnAddApp"
-                        Click="BtnAddApp_OnClick"
-                        Width="80" 
-                        Height="30"/>
-                </WrapPanel>
-            </Grid>
-        </Border>
-
         <!-- App List -->
-        <ListBox 
+        <ListBox
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             Name="LbApp"
-            Grid.Row="1"
-            BorderThickness="0"
-            Background="Transparent"
-            HorizontalAlignment="Stretch"
-            BorderBrush="Transparent">
+            Grid.Row="1">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border>
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="60"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="5" />
                             </Grid.ColumnDefinitions>
 
-                            <Image 
-                                Source="{Binding Icon,Converter={StaticResource ImageConverter}}"
-                                Stretch="None"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Height="60" 
-                                Width="60"/>
+                            <Border
+                                Margin="5 0 0 0"
+                                Height="50"
+                                Width="50"
+                                CornerRadius="6"
+                                Background="{DynamicResource ColorBrushes.Primary}">
+                                <Image
+                                    Source="{Binding Icon,Converter={StaticResource ImageConverter}}"
+                                    Stretch="None"
+                                    Width="40"
+                                    Height="40"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                            </Border>
 
-                            <TextBlock 
-                                Grid.Column="1"
-                                VerticalAlignment="Center"
-                                FontSize="20"
-                                Text="{Binding DisplayName}"/>
 
-                            <ToggleButton
-                                Name="TgbRecord"
+                            <Grid Grid.Column="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    FontSize="22"
+                                    VerticalAlignment="Center"
+                                    Text="{Binding DisplayName}" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="{DynamicResource TextSize.Second}"
+                                    Text="{Binding Location}"
+                                    TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+
+                            <controls:TheToggleButton
+                                x:Name="TgbRecord"
                                 HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                Margin="10 0 0 0"
                                 Content="{Binding HotKey,TargetNullValue=设置快捷键,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                 Click="SetShortcutButton_Click"
                                 Tag="{Binding}"
-                                Width="120"
-                                Height="50"
-                                Grid.Column="2"/>
+                                Width="104"
+                                Height="37"
+                                Grid.Column="4" />
                         </Grid>
                     </Border>
                 </DataTemplate>
@@ -101,13 +90,14 @@
 
         <!-- Status -->
         <Border Grid.Row="2" Height="50">
-            <Grid>
-                <TextBlock 
-                    Name="TbVersion"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Text="Version 0.1 build 20220120"/>
-            </Grid>
+            <controls:TheButton
+                Margin="10 0 0 0"
+                Content="添加应用"
+                HorizontalAlignment="Left"
+                x:Name="BtnAddApp"
+                Click="BtnAddApp_OnClick"
+                Width="110"
+                Height="37" />
         </Border>
     </Grid>
-</controls:AdonisWindow>
+</controls:TheWindow>

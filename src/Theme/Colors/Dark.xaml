@@ -1,0 +1,51 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="Color1">#f9f0ff</Color>
+    <Color x:Key="Color2">#efdbff</Color>
+    <Color x:Key="Color3">#d3adf7</Color>
+    <Color x:Key="Color4">#b37feb</Color>
+    <Color x:Key="Color5">#9254de</Color>
+    <Color x:Key="Color6">#722ed1</Color>
+    <Color x:Key="Color7">#531dab</Color>
+    <Color x:Key="Color8">#391085</Color>
+    <Color x:Key="Color9">#22075e</Color>
+    <Color x:Key="Color10">#120338</Color>
+
+    <Color x:Key="Colors.Primary">#9254de</Color>
+    <Color x:Key="Colors.Background">#141414</Color>
+    <Color x:Key="Colors.Foreground">#FFFFFFFF</Color>
+    <Color x:Key="Colors.Info">#DE5454</Color>
+
+    <!-- button -->
+    <Color x:Key="Colors.Button.MouseOver">#9254de</Color>
+    <Color x:Key="Colors.Button.Pressed">#722ed1</Color>
+    <Color x:Key="Colors.Button.Checked">#531dab</Color>
+
+    <!-- border -->
+    <Color x:Key="Colors.Border">#BBBBBB</Color>
+
+    <!-- list -->
+    <Color x:Key="Colors.List.Background">#2F2F2F</Color>
+    <Color x:Key="Colors.List.Item.Background">#2F2F2F</Color>
+    <Color x:Key="Colors.List.Item.Background.MoveOver">#262626</Color>
+    <Color x:Key="Colors.List.Item.Background.Pressed">#202020</Color>
+    
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="ColorBrushes.Primary" Color="{StaticResource Colors.Primary}"/>
+    <SolidColorBrush x:Key="ColorBrushes.Background" Color="{StaticResource Colors.Background}"/>
+    <SolidColorBrush x:Key="ColorBrushes.Foreground" Color="{StaticResource Colors.Foreground}"/>
+    <SolidColorBrush x:Key="ColorBrushes.Info.Background" Color="{StaticResource Colors.Info}"/>
+
+    <SolidColorBrush x:Key="ColorBrushes.Button.Background" Color="{StaticResource Colors.Primary}"/>
+    <SolidColorBrush x:Key="ColorBrushes.Button.MouseOver" Color="{StaticResource Colors.Button.MouseOver}"/>
+    <SolidColorBrush x:Key="ColorBrushes.Button.Pressed" Color="{StaticResource Colors.Button.Pressed}"/>
+    <SolidColorBrush x:Key="ColorBrushes.Button.Checked" Color="{StaticResource Colors.Button.Checked}"/>
+
+    <SolidColorBrush x:Key="ColorBrushes.Border.Background" Color="{StaticResource Colors.Border}"/>
+
+    <SolidColorBrush x:Key="ColorBrushes.List.Background" Color="{StaticResource Colors.List.Background}"/>
+    <SolidColorBrush x:Key="ColorBrushes.List.Item.Background" Color="{StaticResource Colors.List.Background}"/>
+    <SolidColorBrush x:Key="ColorBrushes.List.Item.MouseOver" Color="{StaticResource Colors.List.Item.Background.MoveOver}"/>
+    <SolidColorBrush x:Key="ColorBrushes.List.Item.Pressed" Color="{StaticResource Colors.List.Item.Background.Pressed}"/>
+    
+</ResourceDictionary>

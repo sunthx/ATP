@@ -12,8 +12,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
+using System.Windows.Interop;
 using System.Windows.Media;
-using AdonisUI.Controls;
+using ATP.Theme.Controls;
 using Newtonsoft.Json;
 using NLog;
 using Vanara.PInvoke;
@@ -24,7 +25,7 @@ using Path = System.IO.Path;
 
 namespace ATP
 {
-    public partial class MainWindow : AdonisWindow
+    public partial class MainWindow : TheWindow 
     {
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
@@ -46,7 +47,7 @@ namespace ATP
             Loaded += MainWindow_Loaded;
             Closed += OnClosed;
 
-            TbVersion.Text = $"version {Assembly.GetExecutingAssembly().GetName().Version}";
+            // TbVersion.Text = $"version {Assembly.GetExecutingAssembly().GetName().Version}";
             _currentProcessId = (uint)Process.GetCurrentProcess().Id;
         }
 
@@ -68,13 +69,13 @@ namespace ATP
             LbApp.ItemsSource = InstalledApplications;
 
             _keyboardHookProc = KeyboardHookProc;
-            _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
+            // _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
         }
 
 
         private void OnClosed(object sender, EventArgs e)
         {
-            NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
+            // NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
         }
 
         private void BtnAddApp_OnClick(object sender, RoutedEventArgs e)
@@ -227,7 +228,7 @@ namespace ATP
                 if (isHandled && !_isContinueWhenHandled)
                     return (IntPtr)1;
             }
-            else if (combinationKeys.IsAnyKeyPressed() && _isRecordingShortcut)
+            else if (!combinationKeys.IsAnyKeyPressed() && _isRecordingShortcut)
             {
                 StopRecordShortcut();
             }
@@ -244,7 +245,7 @@ namespace ATP
             if (_isRecordingShortcut)
             {
                 //录制
-                RecordShortcut(combinationKeys);
+                ShowShortcut(combinationKeys);
                 return true;
             }
             else
@@ -255,11 +256,15 @@ namespace ATP
         }
 
         /// <summary>
-        /// 录制快捷键
+        /// 显示当前的快捷键 
         /// </summary>                
-        private void RecordShortcut(string shortcut)
+        private void ShowShortcut(string shortcut)
         {
-            SetShortcut(shortcut);
+            Dispatcher.Invoke(() =>
+            {
+                _currentRecordButton.Content = shortcut;
+                _currentSelectedAppItem.HotKey = shortcut;
+            });
         }
 
         /// <summary>
@@ -303,27 +308,19 @@ namespace ATP
         }
 
         /// <summary>
-        /// 设置快捷键
-        /// </summary>
-        /// <remarks>
-        /// 并不会持久化快捷键的设置
-        /// </remarks>
-        private void SetShortcut(string shortcut)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                _currentRecordButton.Content = shortcut;
-                _currentSelectedAppItem.HotKey = shortcut;
-            });
-        }
-
-        /// <summary>
         /// 停止录制快捷键
         /// </summary>
         private void StopRecordShortcut()
         {
             SaveConfig(InstalledApplications.ToList());
             RefreshData(false);
+
+            Dispatcher.Invoke(() =>
+            {
+                _currentRecordButton.IsChecked = false;
+            });
+
+            _isRecordingShortcut = false;
         }
 
         /// <summary>

@@ -1,0 +1,45 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Colors/Dark.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+    <Style TargetType="ListBox">
+       <Setter Property="BorderThickness" Value="0"/>
+       <Setter Property="Foreground" Value="{DynamicResource ColorBrushes.Foreground}"/>
+       <Setter Property="Background" Value="{DynamicResource ColorBrushes.List.Background}"/>
+       <Setter Property="BorderBrush" Value="{DynamicResource ColorBrushes.Border.Background}"/>
+       <Setter Property="FontSize" Value="{DynamicResource TextSize.Primary}"/>
+   </Style> 
+
+    <Style TargetType="ListBoxItem">
+        <Setter Property="Background" Value="{DynamicResource ColorBrushes.List.Item.Background}"/>
+        <Setter Property="FontSize" Value="{DynamicResource TextSize.Primary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Height" Value="65"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border 
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Background="{TemplateBinding Background}"
+                        Name="Container">
+                        <ContentPresenter 
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Container" Property="Background" Value="{DynamicResource ColorBrushes.List.Item.MouseOver}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected"  Value="True">
+                            <Setter TargetName="Container" Property="Background" Value="{DynamicResource ColorBrushes.List.Item.Pressed}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
