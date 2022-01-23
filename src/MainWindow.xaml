@@ -4,10 +4,11 @@
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     xmlns:atp="clr-namespace:ATP"
-                    xmlns:controls="clr-namespace:ATP.Theme.Controls"
+                    xmlns:controls="clr-namespace:ATP.Themes.Controls"
                     mc:Ignorable="d"
                     WindowStartupLocation="CenterScreen"
                     Title="TabAltPlus"
+                    Icon="cool.ico"
                     Height="700"
                     Width="400"
                     MinWidth="400">

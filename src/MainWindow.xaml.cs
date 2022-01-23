@@ -14,7 +14,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
-using ATP.Theme.Controls;
+using ATP.Themes.Controls;
 using Newtonsoft.Json;
 using NLog;
 using Vanara.PInvoke;

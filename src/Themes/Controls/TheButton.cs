@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace ATP.Theme.Controls
+namespace ATP.Themes.Controls
 {
     internal class TheButton : Button
     {

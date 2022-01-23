@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls.Primitives;
 
-namespace ATP.Theme.Controls
+namespace ATP.Themes.Controls
 {
     public class TheToggleButton : ToggleButton
     {
@@ -17,6 +12,11 @@ namespace ATP.Theme.Controls
         {
             get { return (CornerRadius)GetValue(CornerRadiusProperty); }
             set { SetValue(CornerRadiusProperty, value); }
+        }
+
+        static TheToggleButton()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(TheToggleButton),new FrameworkPropertyMetadata(typeof(TheToggleButton)));
         }
     }
 }
