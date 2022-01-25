@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using ATP.Themes.Controls;
@@ -51,6 +52,7 @@ namespace ATP
             _currentProcessId = (uint)Process.GetCurrentProcess().Id;
         }
 
+       
         public ObservableCollection<InstalledApp> InstalledApplications { get; set; }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)

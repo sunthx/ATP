@@ -8,7 +8,11 @@
         <Setter Property="Background" Value="{DynamicResource ColorBrushes.Background}" />
         <Setter Property="WindowChrome.WindowChrome">
             <Setter.Value>
-                <WindowChrome UseAeroCaptionButtons="False" />
+                <WindowChrome 
+                    IsHitTestVisibleInChrome="True"
+                    UseAeroCaptionButtons="False"
+                    CaptionHeight="{Binding TitleBarHeight,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type controls:TheWindow}}}"
+                    />
             </Setter.Value>
         </Setter>
         <Setter Property="Template">
@@ -17,45 +21,79 @@
                     <Grid x:Name="Layout"
                           Background="{TemplateBinding Background}">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="50" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <Grid x:Name="WindowTitlePanel"
-                              Height="{Binding Path=(SystemParameters.WindowNonClientFrameThickness).Top}"
+                              Height="{TemplateBinding TitleBarHeight}"
                               Background="{TemplateBinding BorderBrush}"
                               Margin="0,-1,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-
+                            
+                            <!-- Icon And Title -->
                             <StackPanel Orientation="Horizontal">
                                 <Image Source="{TemplateBinding Icon}"
                                        VerticalAlignment="Center"
-                                       Margin="5,0,0,0"
-                                       Height="{x:Static SystemParameters.SmallIconHeight}"
-                                       Width="{x:Static SystemParameters.SmallIconWidth}"
-                                       WindowChrome.IsHitTestVisibleInChrome="True">
-                                    <!-- <Behaviors:Interaction.Triggers> -->
-                                    <!--     <Behaviors:EventTrigger EventName="MouseLeftButtonDown"> -->
-                                    <!--         <Behaviors:InvokeCommandAction Command="{x:Static SystemCommands.ShowSystemMenuCommand}" /> -->
-                                    <!--     </Behaviors:EventTrigger> -->
-                                    <!--     <Behaviors:EventTrigger EventName="MouseRightButtonDown"> -->
-                                    <!--         <Behaviors:InvokeCommandAction Command="{x:Static SystemCommands.ShowSystemMenuCommand}" /> -->
-                                    <!--     </Behaviors:EventTrigger> -->
-                                    <!-- </Behaviors:Interaction.Triggers> -->
-                                </Image>
-
+                                       Margin="10,0,0,0"
+                                       Height="{TemplateBinding IconHeight}"
+                                       Width="{TemplateBinding IconWidth}"
+                                       WindowChrome.IsHitTestVisibleInChrome="True" />
                                 <ContentControl IsTabStop="False"
-                                                Margin="5,0,0,0"
-                                                Foreground="White"
+                                                Margin="10,0,0,0"
+                                                Foreground="{DynamicResource ColorBrushes.Foreground}"
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
-                                                FontSize="{DynamicResource {x:Static SystemFonts.CaptionFontSizeKey}}"
+                                                FontSize="{TemplateBinding TitleFontSize}"
                                                 Content="{TemplateBinding Title}" />
                             </StackPanel>
+                            
+                            <!-- Left Buttons -->
+                            <ContentPresenter Grid.Column="1"/>
 
+                            <!-- Right Buttons -->
+                            <ContentPresenter Grid.Column="2"/>
 
+                            <!-- Window Command Buttons -->
+                            <WrapPanel Grid.Column="3" VerticalAlignment="Center" Margin="0 0 10 0">
+                                <controls:TheButton x:Name="WindowMinimize" 
+                                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                                    Width="30"
+                                                    Command="{Binding Source={x:Static SystemCommands.MinimizeWindowCommand}}"
+                                                    Height="30">
+                                    <Grid>
+                                        <Path Data="M0,6 L12,6 L12,7 L0,7 z"
+                                              Width="12"
+                                              Height="12"
+                                              UseLayoutRounding="True"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Center"
+                                              Fill="{DynamicResource ColorBrushes.Foreground}"/>
+                                    </Grid>
+                                </controls:TheButton>
+
+                                <controls:TheButton x:Name="WindowClose" 
+                                                    Margin="5 0 0 0"
+                                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                                    Width="30"
+                                                    Command="{Binding Source={x:Static SystemCommands.CloseWindowCommand}}"
+                                                    Height="30">
+                                    <Grid>
+                                        <Path Data="M1,0 L6,5 L11,0 L12,1 L7,6 L12,11 L11,12 L6,7 L1,12 L0,11 L5,6 L0,1 z"
+                                              Width="12"
+                                              Height="12"
+                                              UseLayoutRounding="True"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Center"
+                                              Fill="{DynamicResource ColorBrushes.Foreground}" />
+                                    </Grid>
+                                </controls:TheButton>
+
+                            </WrapPanel>
                         </Grid>
                         <AdornerDecorator Grid.Row="1"
                                           KeyboardNavigation.IsTabStop="False">

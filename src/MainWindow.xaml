@@ -9,6 +9,10 @@
                     WindowStartupLocation="CenterScreen"
                     Title="TabAltPlus"
                     Icon="cool.ico"
+                    TitleBarHeight="50"
+                    IconHeight="25"
+                    IconWidth="25"
+                    TitleFontSize="18"
                     Height="700"
                     Width="400"
                     MinWidth="400">
@@ -93,12 +97,14 @@
         <Border Grid.Row="2" Height="50">
             <controls:TheButton
                 Margin="10 0 0 0"
-                Content="添加应用"
+                FontSize="16"
                 HorizontalAlignment="Left"
                 x:Name="BtnAddApp"
                 Click="BtnAddApp_OnClick"
                 Width="110"
-                Height="37" />
+                Height="37" >
+                Add
+            </controls:TheButton>
         </Border>
     </Grid>
 </controls:TheWindow>
