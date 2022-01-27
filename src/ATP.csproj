@@ -128,9 +128,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CombinationKeys.cs" />
+    <Compile Include="InstalledApp.cs" />
+    <Compile Include="KeyDirection.cs" />
     <Compile Include="Themes\Controls\TheButton.cs" />
     <Compile Include="Themes\Controls\TheToggleButton.cs" />
     <Compile Include="Themes\Controls\TheWindow.cs" />
+    <Compile Include="Utils.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -208,6 +212,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="cool.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="cool.embedded.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,7 +13,6 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
 using ATP.Themes.Controls;
 using Newtonsoft.Json;
 using NLog;
@@ -22,7 +20,6 @@ using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 using Control = System.Windows.Forms.Control;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
-using Path = System.IO.Path;
 
 namespace ATP
 {
@@ -65,19 +62,18 @@ namespace ATP
 
             _cache = new Dictionary<string, InstalledApp>();
             InstalledApplications = new ObservableCollection<InstalledApp>();
-
+        
             RefreshData(true);
 
             LbApp.ItemsSource = InstalledApplications;
 
             _keyboardHookProc = KeyboardHookProc;
-            // _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
+            _globalKeyboardHook = NativeMethods.RegisterKeyboardHook(_keyboardHookProc);
         }
-
 
         private void OnClosed(object sender, EventArgs e)
         {
-            // NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
+            NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
         }
 
         private void BtnAddApp_OnClick(object sender, RoutedEventArgs e)
@@ -342,136 +338,6 @@ namespace ATP
                     streamWriter.Flush();
                 }
             }
-        }
-    }
-
-    /// <summary>
-    /// 表示一个组合键
-    /// </summary>
-    /// <remarks>
-    /// 修饰键 + 字母或者数字 
-    /// </remarks>
-    public class CombinationKeys
-    {
-        public CombinationKeys(Keys key, KeyDirection keyDirection, bool altPressed, bool controlPressed, bool shiftPressed)
-        {
-            AltPressed = altPressed;
-            ControlPressed = controlPressed;
-            Key = key;
-            KeyDirection = keyDirection;
-            ShiftPressed = shiftPressed;
-        }
-
-        public bool AltPressed { get; private set; }
-        public bool ControlPressed { get; private set; }
-        public bool ShiftPressed { get; private set; }
-        public Keys Key { get; private set; }
-        public KeyDirection KeyDirection { get; private set; }
-
-        public bool IsValid()
-        {
-            return  IsModifierKeyPressed() && IsCommonKeyPressed();
-        }
-
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            if (ControlPressed)
-                sb.Append("Ctrl + ");
-            if (ShiftPressed)
-                sb.Append("Shift + ");
-            if (AltPressed)
-                sb.Append("Alt + ");
-
-            var keyString = IsNumber() ? Key.ToString().Remove(0, 1) : Key.ToString();
-            sb.Append(keyString);
-
-            return sb.ToString();
-        }
-
-        public bool IsLetter()
-        {
-            return Key >= Keys.A && Key <= Keys.Z;
-        }
-
-        public bool IsNumber()
-        {
-            return Key >= Keys.D0 && Key <= Keys.D9;
-        }
-
-        public bool IsAnyKeyPressed()
-        {
-            return IsModifierKeyPressed() || IsCommonKeyPressed();
-        }
-
-        private bool IsCommonKeyPressed()
-        {
-            return (IsLetter() || IsNumber()) && KeyDirection == KeyDirection.Down;
-        }
-
-        private bool IsModifierKeyPressed()
-        {
-            return (AltPressed || ControlPressed || ShiftPressed);
-        }
-    }
-
-    public enum KeyDirection
-    {
-        Down,
-        Up,
-        Unknown
-    }
-
-    public class InstalledApp
-    {
-        public string DisplayName { get; set; }
-        public string Location { get; set; }
-        public string FileName { set; get; }
-        public string Icon { get; set; }
-        public string HotKey { get; set; }
-
-        public static InstalledApp New(string appFilePath)
-        {
-            var installApp = new InstalledApp
-            {
-                Location = appFilePath,
-                DisplayName = Path.GetFileNameWithoutExtension(appFilePath),
-                FileName = Path.GetFileName(appFilePath)
-            };
-
-            return installApp;
-        }
-    }
-
-    public class Utils
-    {
-        public static string GetAppIconFile(string filePath)
-        {
-            var destinationFile = Path.Combine(Constants.IconCacheDirectory,
-                $"{Path.GetFileNameWithoutExtension(filePath)}.png");
-            if (File.Exists(destinationFile))
-                return destinationFile;
-
-            NativeMethods.ExtractAndSaveAppIconFile(filePath, destinationFile);
-            return destinationFile;
-        }
-
-        public static TChildItem FindVisualChild<TChildItem>(DependencyObject obj)
-            where TChildItem : DependencyObject
-        {
-            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
-            {
-                var child = VisualTreeHelper.GetChild(obj, i);
-                if (child != null && child is TChildItem)
-                    return (TChildItem)child;
-                else
-                {
-                    var childOfChild = FindVisualChild<TChildItem>(child);
-                    if (childOfChild != null)
-                        return childOfChild;
-                }
-            }
-            return null;
         }
     }
 }
