@@ -2,7 +2,7 @@
 
 namespace ATP
 {
-    public class InstalledApp
+    public class QuickApp
     {
         public string DisplayName { get; set; }
         public string Location { get; set; }
@@ -10,9 +10,9 @@ namespace ATP
         public string Icon { get; set; }
         public string HotKey { get; set; }
 
-        public static InstalledApp New(string appFilePath)
+        public static QuickApp New(string appFilePath)
         {
-            var installApp = new InstalledApp
+            var installApp = new QuickApp
             {
                 Location = appFilePath,
                 DisplayName = Path.GetFileNameWithoutExtension(appFilePath),
