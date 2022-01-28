@@ -17,10 +17,10 @@ namespace ATP
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
         private readonly User32.HookProc _keyboardHookProc;
         private User32.SafeHHOOK _globalKeyboardHook;
-        private int _currentMainProcessId;
+        private readonly int _currentMainProcessId;
 
         //cache
-        private Dictionary<string, QuickApp> _cache;
+        private readonly Dictionary<string, QuickApp> _cache;
 
         //config
         private bool _isContinueWhenHandled = true;
@@ -42,10 +42,14 @@ namespace ATP
             NativeMethods.ReleaseWindowsHook(_globalKeyboardHook);
         }
 
+        public List<QuickApp> GetQuickApps()
+        {
+
+        }
+
         /// <summary>
         /// 重加载数据
         /// </summary>
-        /// <param name="isUpdateView">是否刷新GUI</param>
         private void RefreshData(bool isUpdateView = false)
         {
             var data = LoadDataFromConfigFile();
@@ -172,7 +176,7 @@ namespace ATP
             
             if (queryResult != default)
             {
-                NativeMethods.BringWindowToFront(_currentProcessId,queryResult.MainWindowHandle);
+                NativeMethods.BringWindowToFront((uint)_currentMainProcessId,queryResult.MainWindowHandle);
             }
             else
             {
@@ -185,6 +189,24 @@ namespace ATP
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 处理组合键
+        /// </summary>     
+        private bool HandleCombinationKeys(string combinationKeys)
+        {
+            if (_isRecordingShortcut)
+            {
+                //录制
+                ShowShortcut(combinationKeys);
+                return true;
+            }
+            else
+            {
+                //匹配
+                return MatchShortcut(combinationKeys);
+            }
         }
     }
 }

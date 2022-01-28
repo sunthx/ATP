@@ -1,20 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Forms;
 using ATP.Themes.Controls;
-using Newtonsoft.Json;
 using NLog;
-using static Vanara.PInvoke.User32;
-using Control = System.Windows.Forms.Control;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ATP
@@ -28,11 +20,11 @@ namespace ATP
         private QuickApp _currentSelectedAppItem;
         private QuickApp _currentSelectedApp;
 
+
         public MainWindow(QuickOpenAppManage manage)
         {
             InitializeComponent();
             Loaded += MainWindow_Loaded;
-            Closed += OnClosed;
         }
 
         public ObservableCollection<QuickApp> InstalledApplications { get; set; }
@@ -41,14 +33,7 @@ namespace ATP
         {
             InstalledApplications = new ObservableCollection<QuickApp>();
         
-            RefreshData(true);
-
             LbApp.ItemsSource = InstalledApplications;
-        }
-
-        private void OnClosed(object sender, EventArgs e)
-        {
-            
         }
 
         private void BtnAddApp_OnClick(object sender, RoutedEventArgs e)
@@ -123,25 +108,6 @@ namespace ATP
             SaveConfig(InstalledApplications.ToList());
         }
 
-       
-        /// <summary>
-        /// 处理组合键
-        /// </summary>     
-        private bool HandleCombinationKeys(string combinationKeys)
-        {
-            if (_isRecordingShortcut)
-            {
-                //录制
-                ShowShortcut(combinationKeys);
-                return true;
-            }
-            else
-            {
-                //匹配
-                return MatchShortcut(combinationKeys);
-            }
-        }
-
         /// <summary>
         /// 显示当前的快捷键 
         /// </summary>                
@@ -159,9 +125,6 @@ namespace ATP
         /// </summary>
         private void StopRecordShortcut()
         {
-            SaveConfig(InstalledApplications.ToList());
-            RefreshData(false);
-
             Dispatcher.Invoke(() =>
             {
                 _currentRecordButton.IsChecked = false;

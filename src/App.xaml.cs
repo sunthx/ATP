@@ -47,7 +47,7 @@ namespace ATP
             _quickOpenAppManage.StartListening();
 
             _atpTrayIcon = new AtpTrayIcon();
-            _atpTrayIcon.OpenPreferences += _atpTrayIcon_OpenPreferences;
+            _atpTrayIcon.OnOpen += AtpTrayIconOnOpen;
         }
 
         protected override void OnExit(ExitEventArgs e)
@@ -56,8 +56,9 @@ namespace ATP
             base.OnExit(e);
         }
 
-        private void _atpTrayIcon_OpenPreferences()
+        private void AtpTrayIconOnOpen()
         {
+
         }
     }
 }
