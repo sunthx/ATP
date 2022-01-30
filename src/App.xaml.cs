@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using ATP.Internal;
 using NLog;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
@@ -12,7 +13,8 @@ namespace ATP
     public partial class App
     {
         private AtpTrayIcon _atpTrayIcon;
-        private QuickOpenAppManage _quickOpenAppManage;
+        private QuickAppService _quickAppService;
+        private MainWindow _mainWindow;
 
         public App()
         {
@@ -42,23 +44,37 @@ namespace ATP
             if (!Directory.Exists(Constants.IconCacheDirectory))
                 Directory.CreateDirectory(Constants.IconCacheDirectory);
 
-            var processId = Process.GetCurrentProcess().Id;
-            _quickOpenAppManage = new QuickOpenAppManage(processId);
-            _quickOpenAppManage.StartListening();
+            _quickAppService = new QuickAppService();
 
             _atpTrayIcon = new AtpTrayIcon();
             _atpTrayIcon.OnOpen += AtpTrayIconOnOpen;
-        }
 
-        protected override void OnExit(ExitEventArgs e)
-        {
-            _quickOpenAppManage.StopListening();
-            base.OnExit(e);
+            ShowMainWindow();
         }
 
         private void AtpTrayIconOnOpen()
         {
+            ShowMainWindow();
+        }
 
+        private void ShowMainWindow()
+        {
+            if (_mainWindow != null)
+            {
+                NativeMethods.BringWindowToFront(
+                    (uint)Process.GetCurrentProcess().Id,
+                    Process.GetCurrentProcess().Handle);
+                return;
+            }
+
+            _mainWindow = new MainWindow(_quickAppService);
+            _mainWindow.Closed += (sender, args) =>
+            {
+                _mainWindow = null;
+            };
+
+            Application.Current.MainWindow = _mainWindow;
+            Application.Current.MainWindow.Show();
         }
     }
 }

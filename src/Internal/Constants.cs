@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace ATP
+namespace ATP.Internal
 {
     internal class Constants
     {

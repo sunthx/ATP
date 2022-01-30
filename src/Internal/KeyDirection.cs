@@ -1,4 +1,4 @@
-﻿namespace ATP
+﻿namespace ATP.Internal
 {
     public enum KeyDirection
     {

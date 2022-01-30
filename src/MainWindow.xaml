@@ -5,16 +5,17 @@
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     xmlns:atp="clr-namespace:ATP"
                     xmlns:controls="clr-namespace:ATP.Themes.Controls"
+                    xmlns:internal="clr-namespace:ATP.Internal"
                     mc:Ignorable="d"
                     WindowStartupLocation="CenterScreen"
-                    Title="TabAltPlus"
+                    Title="ATP"
                     Icon="cool.ico"
                     TitleBarHeight="50"
                     IconHeight="25"
                     IconWidth="25"
                     TitleFontSize="18"
                     Height="700"
-                    Width="400"
+                    Width="420"
                     MinWidth="400">
     <controls:TheWindow.Resources>
         <atp:BitmapImageConverter x:Key="ImageConverter" />
@@ -31,7 +32,7 @@
             Name="LbApp"
             Grid.Row="1">
             <ListBox.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate DataType="internal:QuickApp">
                     <Border>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -83,8 +84,8 @@
                                 HorizontalAlignment="Right"
                                 Content="{Binding HotKey,TargetNullValue=设置快捷键,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                 Click="SetShortcutButton_Click"
-                                Tag="{Binding}"
-                                Width="104"
+                                Tag="{Binding .}"
+                                Width="120"
                                 Height="37"
                                 Grid.Column="4" />
                         </Grid>
@@ -103,7 +104,7 @@
                 Click="BtnAddApp_OnClick"
                 Width="110"
                 Height="37" >
-                Add
+                添加应用
             </controls:TheButton>
         </Border>
     </Grid>

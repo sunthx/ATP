@@ -128,15 +128,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AtpTrayIcon.cs" />
-    <Compile Include="CombinationKeys.cs" />
-    <Compile Include="QuickApp.cs" />
-    <Compile Include="KeyDirection.cs" />
-    <Compile Include="QuickOpenAppManage.cs" />
+    <Compile Include="Internal\AtpTrayIcon.cs" />
+    <Compile Include="Internal\HotKey.cs" />
+    <Compile Include="Internal\KeyboardService.cs" />
+    <Compile Include="Internal\QuickApp.cs" />
+    <Compile Include="Internal\KeyDirection.cs" />
+    <Compile Include="Internal\QuickAppService.cs" />
     <Compile Include="Themes\Controls\TheButton.cs" />
     <Compile Include="Themes\Controls\TheToggleButton.cs" />
     <Compile Include="Themes\Controls\TheWindow.cs" />
-    <Compile Include="Utils.cs" />
+    <Compile Include="Internal\ViewHelper.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -146,7 +147,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="BitmapImageConverter.cs" />
-    <Compile Include="Constants.cs" />
+    <Compile Include="Internal\Constants.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -181,7 +182,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NativeMethods.cs" />
+    <Compile Include="Internal\NativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

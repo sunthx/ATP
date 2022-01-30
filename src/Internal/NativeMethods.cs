@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Vanara.PInvoke;
 
-namespace ATP
+namespace ATP.Internal
 {
     internal class NativeMethods
     {
@@ -18,7 +17,7 @@ namespace ATP
             User32.GetWindowThreadProcessId(hForeWnd, out var processId);
             User32.AttachThreadInput(currentProcessId, processId, true);
             User32.SetForegroundWindow(wnd);
-            User32.ShowWindow(wnd, ShowWindowCommand.SW_NORMAL);
+            User32.ShowWindow(wnd, ShowWindowCommand.SW_RESTORE);
             User32.SetWindowPos(wnd, HWND.HWND_TOPMOST, 0, 0, 0, 0,
                 User32.SetWindowPosFlags.SWP_NOSIZE | User32.SetWindowPosFlags.SWP_NOMOVE);
             User32.SetWindowPos(wnd, HWND.HWND_NOTOPMOST, 0, 0, 0, 0,

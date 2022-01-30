@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Forms;
 using Application = System.Windows.Application;
 
-namespace ATP
+namespace ATP.Internal
 {
     public class AtpTrayIcon : IDisposable
     {

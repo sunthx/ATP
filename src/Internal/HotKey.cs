@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Windows.Forms;
 
-namespace ATP
+namespace ATP.Internal
 {
     /// <summary>
     /// 表示一个组合键
@@ -9,9 +9,9 @@ namespace ATP
     /// <remarks>
     /// 修饰键 + 字母或者数字 
     /// </remarks>
-    public class HotKey
+    public class CombinationKeys
     {
-        public HotKey(Keys key, KeyDirection keyDirection, bool altPressed, bool controlPressed, bool shiftPressed)
+        public CombinationKeys(Keys key, KeyDirection keyDirection, bool altPressed, bool controlPressed, bool shiftPressed)
         {
             AltPressed = altPressed;
             ControlPressed = controlPressed;
@@ -25,6 +25,7 @@ namespace ATP
         public bool ShiftPressed { get; private set; }
         public Keys Key { get; private set; }
         public KeyDirection KeyDirection { get; private set; }
+        public bool IsHandled { get; set; } = false;
 
         public bool IsValid()
         {
@@ -66,7 +67,6 @@ namespace ATP
         {
             return (IsLetter() || IsNumber()) && KeyDirection == KeyDirection.Down;
         }
-
         private bool IsModifierKeyPressed()
         {
             return (AltPressed || ControlPressed || ShiftPressed);

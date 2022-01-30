@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using ATP.Internal;
 using ATP.Themes.Controls;
 using NLog;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
@@ -13,16 +14,16 @@ namespace ATP
 {
     public partial class MainWindow : TheWindow 
     {
-        private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-
+        private readonly QuickAppService _quickAppService;
         private bool _isRecordingShortcut;
         private ToggleButton _currentRecordButton;
         private QuickApp _currentSelectedAppItem;
-        private QuickApp _currentSelectedApp;
 
 
-        public MainWindow(QuickOpenAppManage manage)
+        public MainWindow(QuickAppService quickAppService)
         {
+            _quickAppService = quickAppService;
+            _quickAppService.OnHotKeyReceived += QuickAppServiceOnOnHotKeyReceived;
             InitializeComponent();
             Loaded += MainWindow_Loaded;
         }
@@ -31,8 +32,7 @@ namespace ATP
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            InstalledApplications = new ObservableCollection<QuickApp>();
-        
+            InstalledApplications = new ObservableCollection<QuickApp>(_quickAppService.GetAll());
             LbApp.ItemsSource = InstalledApplications;
         }
 
@@ -80,7 +80,7 @@ namespace ATP
 
             for (var i = 0; i < LbApp.Items.Count; i++)
             {
-                var contentPresenter = Utils.FindVisualChild<ContentPresenter>((ListBoxItem)LbApp.ItemContainerGenerator.ContainerFromItem(LbApp.Items[i]));
+                var contentPresenter = ViewHelper.FindVisualChild<ContentPresenter>((ListBoxItem)LbApp.ItemContainerGenerator.ContainerFromItem(LbApp.Items[i]));
                 var dataTemplate = contentPresenter.ContentTemplate;
                 var target = (ToggleButton)dataTemplate.FindName("TgbRecord", contentPresenter);
                 result.Add(target);
@@ -89,28 +89,17 @@ namespace ATP
             return result;
         }
 
-        /// <summary>
-        /// 将 App 加载到 GUI 上
-        /// </summary>
-        /// <param name="filePath"></param>
         private void AddAppInfoToList(string filePath)
         {
-            if (InstalledApplications.Any(item => item.Location == filePath))
+            var result = _quickAppService.Add(filePath);
+            if (result == default)
             {
                 return;
             }
 
-            var app = QuickApp.New(filePath);
-            var iconFilePath = Utils.GetAppIconFile(filePath);
-            app.Icon = iconFilePath;
-
-            InstalledApplications.Add(app);
-            SaveConfig(InstalledApplications.ToList());
+            InstalledApplications.Add(result);
         }
 
-        /// <summary>
-        /// 显示当前的快捷键 
-        /// </summary>                
         private void ShowShortcut(string shortcut)
         {
             Dispatcher.Invoke(() =>
@@ -120,9 +109,6 @@ namespace ATP
             });
         }
 
-        /// <summary>
-        /// 停止录制快捷键
-        /// </summary>
         private void StopRecordShortcut()
         {
             Dispatcher.Invoke(() =>
@@ -133,6 +119,19 @@ namespace ATP
             _isRecordingShortcut = false;
         }
 
-        
+        private void QuickAppServiceOnOnHotKeyReceived(CombinationKeys combinationKeys)
+        {
+            if (_isRecordingShortcut)
+            {
+                var result = _quickAppService.SetHotKey(_currentSelectedAppItem.Id, combinationKeys);
+                if (result)
+                {
+                    ShowShortcut(combinationKeys.ToString());
+                    StopRecordShortcut();
+                }
+
+                combinationKeys.IsHandled = true;
+            }
+        }
     }
   }

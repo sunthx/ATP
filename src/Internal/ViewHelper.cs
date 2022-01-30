@@ -2,9 +2,9 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace ATP
+namespace ATP.Internal
 {
-    public class Utils
+    public class ViewHelper
     {
         public static string GetAppIconFile(string filePath)
         {
