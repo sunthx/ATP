@@ -1,6 +1,7 @@
 # :zap::zap::zap: ATP
 
-> :full_moon_with_face: Windows 的 `Alt+Tab` 有点啰嗦，通过熟悉的快捷键，可以在IDE等常用软件中来回的穿梭，所以就有了这个小辣鸡 :)
+> :full_moon_with_face: Windows 的 `Alt+Tab` 有点啰嗦！
+> 想通过熟悉的快捷键，可以在IDE等常用软件中来回的穿梭，所以就有了这个小辣鸡 :)
 
 ## 能干啥？
 
