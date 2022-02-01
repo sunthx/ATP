@@ -9,20 +9,22 @@ namespace ATP.Internal
         /// <summary>
         /// 还原窗口
         /// </summary>
-        public static void BringWindowToFront(uint curProcessId, IntPtr wnd)
-        {
+        public static void BringWindowToFront(uint currentProcessId, IntPtr wnd)
+        { 
+            var isIconic = User32.IsIconic(wnd);
             var hForeWnd = User32.GetForegroundWindow();
-            uint currentProcessId = (uint)curProcessId;
-
+            
             User32.GetWindowThreadProcessId(hForeWnd, out var processId);
             User32.AttachThreadInput(currentProcessId, processId, true);
+            
             User32.SetForegroundWindow(wnd);
-            User32.ShowWindow(wnd, ShowWindowCommand.SW_RESTORE);
+            User32.ShowWindow(wnd, isIconic ? ShowWindowCommand.SW_RESTORE : ShowWindowCommand.SW_SHOW);
             User32.SetWindowPos(wnd, HWND.HWND_TOPMOST, 0, 0, 0, 0,
                 User32.SetWindowPosFlags.SWP_NOSIZE | User32.SetWindowPosFlags.SWP_NOMOVE);
             User32.SetWindowPos(wnd, HWND.HWND_NOTOPMOST, 0, 0, 0, 0,
                 User32.SetWindowPosFlags.SWP_NOSIZE | User32.SetWindowPosFlags.SWP_NOMOVE);
             User32.SetForegroundWindow(wnd);
+            
             User32.AttachThreadInput(currentProcessId, processId, false);
         }
 
