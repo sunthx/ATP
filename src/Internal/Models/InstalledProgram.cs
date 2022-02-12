@@ -1,20 +1,22 @@
 ﻿using System;
 using System.IO;
+using ATP.Internal.Utils;
+using Prism.Mvvm;
 
-namespace ATP.Internal
+namespace ATP.Internal.Models
 {
-    public class QuickApp
+    public class InstalledProgram : BindableBase
     {
+        public string HotKey { set; get; }
         public string Id { get; set; }
         public string DisplayName { get; set; }
         public string Location { get; set; }
         public string FileName { set; get; }
         public string Icon { get; set; }
-        public string HotKey { get; set; }
 
-        public static QuickApp New(string appFilePath)
+        public static InstalledProgram New(string appFilePath)
         {
-            var installApp = new QuickApp
+            var installApp = new InstalledProgram
             {
                 Id = Guid.NewGuid().ToString(),
                 Location = appFilePath,

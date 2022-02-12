@@ -1,7 +1,8 @@
 ﻿using System.Text;
 using System.Windows.Forms;
+using ATP.Internal.Services;
 
-namespace ATP.Internal
+namespace ATP.Internal.Models
 {
     /// <summary>
     /// 表示一个组合键

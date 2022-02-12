@@ -1,13 +1,13 @@
-﻿<Application x:Class="ATP.App"
+﻿<unity:PrismApplication x:Class="ATP.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ATP"
+             xmlns:unity="http://prismlibrary.com/"
              ShutdownMode="OnExplicitShutdown">
-    <Application.Resources>
+    <unity:PrismApplication.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/ATP;component/Themes/Generic.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </Application.Resources>
-</Application>
+    </unity:PrismApplication.Resources>
+</unity:PrismApplication>

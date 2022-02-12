@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace ATP.Internal
+namespace ATP.Internal.Utils
 {
     public class ViewHelper
     {

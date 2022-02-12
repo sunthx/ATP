@@ -4,26 +4,28 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using ATP.Internal.Models;
+using ATP.Internal.Utils;
 using Newtonsoft.Json;
 using NLog;
 
-namespace ATP.Internal
+namespace ATP.Internal.Services
 {
-    public class QuickAppService : IDisposable
+    public class AppService : IDisposable, IAppService
     {
         private readonly int _mainProcessId;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
         private KeyboardService _keyboardService;
 
         //cache
-        private readonly Dictionary<string, QuickApp> _hotKeyCache;
-        private readonly Dictionary<string, QuickApp> _appList;
+        private readonly Dictionary<string, InstalledProgram> _hotKeyCache;
+        private readonly Dictionary<string, InstalledProgram> _appList;
 
-        public QuickAppService()
+        public AppService()
         {
             _mainProcessId = Process.GetCurrentProcess().Id;
-            _hotKeyCache = new Dictionary<string, QuickApp>();
-            _appList = new Dictionary<string, QuickApp>();
+            _hotKeyCache = new Dictionary<string, InstalledProgram>();
+            _appList = new Dictionary<string, InstalledProgram>();
             _keyboardService = new KeyboardService();
             _keyboardService.OnReceived += KeyboardServiceOnOnReceived;
             _keyboardService.Start();
@@ -31,18 +33,18 @@ namespace ATP.Internal
 
         public event Action<CombinationKeys> OnHotKeyReceived;
 
-        public List<QuickApp> GetAll()
+        public List<InstalledProgram> GetAll()
         {
             Load();
             return _appList.Values.ToList();
         }
 
-        public QuickApp Add(string appPath)
+        public InstalledProgram Add(string appPath)
         {
             if (Exist(appPath))
                 return default;
 
-            var app = QuickApp.New(appPath);
+            var app = InstalledProgram.New(appPath);
             _appList.Add(app.Id, app);
 
             Save();
@@ -116,7 +118,7 @@ namespace ATP.Internal
                 return;
 
             var fileContent = File.ReadAllText(Constants.ConfigFilePath);
-            var data = JsonConvert.DeserializeObject<List<QuickApp>>(fileContent) ?? new List<QuickApp>();
+            var data = JsonConvert.DeserializeObject<List<InstalledProgram>>(fileContent) ?? new List<InstalledProgram>();
             if (data.Any())
             {
                 data.ForEach(item =>

@@ -6,13 +6,13 @@ using System.Windows;
 using System.Windows.Forms;
 using Application = System.Windows.Application;
 
-namespace ATP.Internal
+namespace ATP.Internal.TrayIcon
 {
-    public class AtpTrayIcon : IDisposable
+    public class ATPTrayIcon : IDisposable
     {
         private readonly NotifyIcon _trayIcon;
 
-        public AtpTrayIcon()
+        public ATPTrayIcon()
         {
             var exitMenuItem = new MenuItem
             {

@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using Vanara.PInvoke;
 
-namespace ATP.Internal
+namespace ATP.Internal.Utils
 {
     internal class NativeMethods
     {

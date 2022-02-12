@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using ATP.Internal.Models;
+using ATP.Internal.Utils;
 using Vanara.PInvoke;
 
-namespace ATP.Internal
+namespace ATP.Internal.Services
 {
-    public class KeyboardService
+    public class KeyboardService : IKeyboardService
     {
         private readonly User32.HookProc _keyboardHookProc;
         private User32.SafeHHOOK _globalKeyboardHook;

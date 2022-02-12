@@ -4,7 +4,13 @@ using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using ATP.Internal;
+using ATP.Internal.Services;
+using ATP.Internal.TrayIcon;
+using ATP.Internal.Utils;
+using ATP.Views;
 using NLog;
+using Prism.Ioc;
+using Prism.Unity;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
@@ -12,14 +18,13 @@ namespace ATP
 {
     public partial class App
     {
-        private AtpTrayIcon _atpTrayIcon;
-        private QuickAppService _quickAppService;
+        private ATPTrayIcon _atpTrayIcon;
         private MainWindow _mainWindow;
 
         public App()
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-            Current.DispatcherUnhandledException += CurrentOnDispatcherUnhandledException;
+            //Current.DispatcherUnhandledException += CurrentOnDispatcherUnhandledException;
         }
 
         private void CurrentOnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -37,24 +42,20 @@ namespace ATP
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-
+        
             if (!Directory.Exists(Constants.DataDirectory))
                 Directory.CreateDirectory(Constants.DataDirectory);
-
+        
             if (!Directory.Exists(Constants.IconCacheDirectory))
                 Directory.CreateDirectory(Constants.IconCacheDirectory);
-
-            _quickAppService = new QuickAppService();
-
-            _atpTrayIcon = new AtpTrayIcon();
+        
+            _atpTrayIcon = new ATPTrayIcon();
             _atpTrayIcon.OnOpen += AtpTrayIconOnOpen;
-
-            ShowMainWindow();
         }
 
         private void AtpTrayIconOnOpen()
         {
-            ShowMainWindow();
+            //ShowMainWindow();
         }
 
         private void ShowMainWindow()
@@ -66,15 +67,22 @@ namespace ATP
                     Process.GetCurrentProcess().Handle);
                 return;
             }
+        }
 
-            _mainWindow = new MainWindow(_quickAppService);
+        protected override void RegisterTypes(IContainerRegistry containerRegistry)
+        {
+            containerRegistry.RegisterSingleton<IAppService, AppService>();
+        }
+
+        protected override Window CreateShell()
+        {
+            _mainWindow = Container.Resolve<MainWindow>();
             _mainWindow.Closed += (sender, args) =>
             {
                 _mainWindow = null;
             };
 
-            Application.Current.MainWindow = _mainWindow;
-            Application.Current.MainWindow.Show();
+            return _mainWindow;
         }
     }
 }
