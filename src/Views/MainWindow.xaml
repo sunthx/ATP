@@ -31,13 +31,24 @@
         </Grid.RowDefinitions>
         <!-- App List -->
         <ListBox
+            Tag="{Binding}"
             ItemsSource="{Binding InstalledApplications}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             Name="LbApp"
             Grid.Row="1">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="viewModels:InstalledProgramViewModel">
-                    <Border>
+                    <Border Tag="{Binding DataContext,RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}">
+                        <Border.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Open Folder in File Explorer" 
+                                          CommandParameter="{Binding}"
+                                          Command="{Binding PlacementTarget.Tag.OpenAppFolderCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Delete" 
+                                          CommandParameter="{Binding}"
+                                          Command="{Binding PlacementTarget.Tag.DeleteAppCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />

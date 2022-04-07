@@ -10,8 +10,6 @@ using ATP.Internal.Utils;
 using ATP.Views;
 using NLog;
 using Prism.Ioc;
-using Prism.Unity;
-using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
 namespace ATP
@@ -24,7 +22,7 @@ namespace ATP
         public App()
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-            //Current.DispatcherUnhandledException += CurrentOnDispatcherUnhandledException;
+            Current.DispatcherUnhandledException += CurrentOnDispatcherUnhandledException;
         }
 
         private void CurrentOnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -55,17 +53,15 @@ namespace ATP
 
         private void AtpTrayIconOnOpen()
         {
-            //ShowMainWindow();
-        }
-
-        private void ShowMainWindow()
-        {
             if (_mainWindow != null)
             {
-                NativeMethods.BringWindowToFront(
-                    (uint)Process.GetCurrentProcess().Id,
-                    Process.GetCurrentProcess().Handle);
-                return;
+                var currentProcess = Process.GetCurrentProcess();
+                NativeMethods.BringWindowToFront((uint)currentProcess.Id, currentProcess.Handle);
+            }
+            else
+            {
+                CreateShell();
+                _mainWindow.Show();
             }
         }
 

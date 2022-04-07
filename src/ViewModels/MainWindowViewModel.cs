@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using ATP.Internal.Models;
 using ATP.Internal.Services;
@@ -21,7 +22,9 @@ namespace ATP.ViewModels
 
             AddAppCommand = new DelegateCommand(AddAppCommandExecute);
             RecordHotKeyCommand = new DelegateCommand<InstalledProgramViewModel>(RecordHotKeyCommandExecute);
-            
+            DeleteAppCommand = new DelegateCommand<InstalledProgramViewModel>(DeleteAppCommandExecute);
+            OpenAppFolderCommand = new DelegateCommand<InstalledProgramViewModel>(OpenAppFolderCommandExecute);
+
             InstalledApplications = new ObservableCollection<InstalledProgramViewModel>();
             _appService.GetAll().ForEach(item =>
             {
@@ -32,6 +35,9 @@ namespace ATP.ViewModels
         public DelegateCommand AddAppCommand { set; get; }
         public DelegateCommand<InstalledProgramViewModel> RecordHotKeyCommand { set; get; }
         public ObservableCollection<InstalledProgramViewModel> InstalledApplications { get; set; }
+        public DelegateCommand<InstalledProgramViewModel> DeleteAppCommand { set; get; }
+        public DelegateCommand<InstalledProgramViewModel> OpenAppFolderCommand{ set; get; }
+
 
         private void AddAppCommandExecute()
         {
@@ -51,6 +57,19 @@ namespace ATP.ViewModels
             {
                 InstalledApplications.Add(new InstalledProgramViewModel(result));
             }
+        }
+
+        private void DeleteAppCommandExecute(InstalledProgramViewModel installedProgramViewModel)
+        {
+            var appId = installedProgramViewModel.ProgramInfo.Id;
+            if(_appService.Delete(appId))
+                InstalledApplications.Remove(installedProgramViewModel);
+        }
+
+        private void OpenAppFolderCommandExecute(InstalledProgramViewModel installedProgramViewModel)
+        {
+            var folder =Path.GetDirectoryName(installedProgramViewModel.ProgramInfo.Location);
+            System.Diagnostics.Process.Start("Explorer", folder);
         }
 
         private void RecordHotKeyCommandExecute(InstalledProgramViewModel installedProgram)

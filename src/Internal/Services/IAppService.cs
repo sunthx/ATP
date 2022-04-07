@@ -9,6 +9,7 @@ namespace ATP.Internal.Services
         event Action<CombinationKeys> OnHotKeyReceived;
         List<InstalledProgram> GetAll();
         InstalledProgram Add(string appPath);
+        bool Delete(string appId);
         bool SetHotKey(string appId, CombinationKeys key);
         void Dispose();
     }

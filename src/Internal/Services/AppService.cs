@@ -51,6 +51,20 @@ namespace ATP.Internal.Services
             return app;
         }
 
+        public bool Delete(string appId)
+        {
+            if (!_appList.ContainsKey(appId))
+                return false;
+
+            if (_appList.Remove(appId))
+            {
+                Save();
+                return true;
+            }
+
+            return false;
+        }
+
         public bool SetHotKey(string appId, CombinationKeys key)
         {
             var hotKey = key.ToString();
@@ -155,7 +169,7 @@ namespace ATP.Internal.Services
             OnHotKeyReceived?.Invoke(combinationKeys);
             if (!combinationKeys.IsHandled)
             {
-                Handle(combinationKeys);
+                combinationKeys.IsHandled = Handle(combinationKeys);
             }
         }
 

@@ -11,7 +11,7 @@ namespace ATP.Internal.Services
     {
         private readonly User32.HookProc _keyboardHookProc;
         private User32.SafeHHOOK _globalKeyboardHook;
-        private bool _isContinueWhenHandled = true;
+        private bool _isContinueWhenHandled = false;
 
         public KeyboardService()
         {
