@@ -56,7 +56,7 @@ namespace ATP
             if (_mainWindow != null)
             {
                 var currentProcess = Process.GetCurrentProcess();
-                NativeMethods.BringWindowToFront((uint)currentProcess.Id, currentProcess.Handle);
+                NativeMethods.BringWindowToFront((uint)currentProcess.Id, currentProcess.MainWindowHandle);
             }
             else
             {
