@@ -38,7 +38,6 @@ namespace ATP.ViewModels
         public DelegateCommand<InstalledProgramViewModel> DeleteAppCommand { set; get; }
         public DelegateCommand<InstalledProgramViewModel> OpenAppFolderCommand{ set; get; }
 
-
         private void AddAppCommandExecute()
         {
             var openFileDialog = new OpenFileDialog
@@ -50,7 +49,6 @@ namespace ATP.ViewModels
             var dialogResult = openFileDialog.ShowDialog();
             if (!dialogResult.HasValue || !dialogResult.Value)
                 return;
-
 
             var result = _appService.Add(openFileDialog.FileName);
             if (result != null)
@@ -90,17 +88,18 @@ namespace ATP.ViewModels
 
         private void AppServiceOnOnHotKeyReceived(CombinationKeys combinationKeys)
         {
-            if (_isRecordingHotKey)
+            if (!_isRecordingHotKey) 
+                return;
+
+            var result = _appService.SetHotKey(_currentInstalledProgramViewModel.ProgramInfo.Id, combinationKeys);
+            if (result)
             {
-                var result = _appService.SetHotKey(_currentInstalledProgramViewModel.ProgramInfo.Id, combinationKeys);
-                if (result)
-                {
-                    _currentInstalledProgramViewModel.SetHotKey(combinationKeys.ToString());
-                    _currentInstalledProgramViewModel.IsRecordHotKey = false;
-                }
-            
-                combinationKeys.IsHandled = true;
+                _currentInstalledProgramViewModel.SetHotKey(combinationKeys.ToString());
+                _currentInstalledProgramViewModel.IsRecordHotKey = false;
             }
+
+            _isRecordingHotKey = false;
+            combinationKeys.IsHandled = true;
         }
     }
 }
